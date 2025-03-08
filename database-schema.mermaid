@@ -1,0 +1,45 @@
+erDiagram
+    USERS ||--o{ ORDERS : places
+    USERS {
+        string user_id PK
+        string email
+        string password_hash
+        string first_name
+        string last_name
+        string address
+        date created_at
+    }
+    
+    PRODUCTS ||--o{ ORDER_ITEMS : contains
+    PRODUCTS {
+        string product_id PK
+        string name
+        string description
+        float price
+        int stock
+        string[] images
+        string[] categories
+        string[] sizes
+        string[] colors
+    }
+    
+    ORDERS ||--|{ ORDER_ITEMS : contains
+    ORDERS {
+        string order_id PK
+        string user_id FK
+        float total_amount
+        string status
+        date order_date
+        string shipping_address
+        string payment_status
+    }
+    
+    ORDER_ITEMS {
+        string order_item_id PK
+        string order_id FK
+        string product_id FK
+        int quantity
+        float unit_price
+        string size
+        string color
+    }

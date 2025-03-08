@@ -1,0 +1,31 @@
+stateDiagram-v2
+    [*] --> Homepage
+    Homepage --> ProductList: Browse Categories
+    Homepage --> Search: Search Products
+    Homepage --> Login: User Account
+    
+    ProductList --> ProductDetail: Select Product
+    Search --> ProductDetail: Select Product
+    
+    ProductDetail --> Cart: Add to Cart
+    Cart --> Login: Checkout
+    Cart --> Checkout: If Logged In
+    
+    Login --> Checkout
+    Checkout --> Payment
+    Payment --> OrderConfirmation
+    OrderConfirmation --> [*]
+    
+    state Login {
+        [*] --> LoginForm
+        LoginForm --> Register: New User
+        Register --> LoginForm
+        LoginForm --> [*]: Success
+    }
+    
+    state Checkout {
+        [*] --> ShippingInfo
+        ShippingInfo --> PaymentMethod
+        PaymentMethod --> OrderReview
+        OrderReview --> [*]
+    }

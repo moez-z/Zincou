@@ -1,0 +1,37 @@
+graph TB
+    subgraph Client Layer
+        UI[Web Interface]
+        Mobile[Mobile Interface]
+    end
+
+    subgraph Application Layer
+        API[API Gateway]
+        Auth[Authentication Service]
+        Product[Product Service]
+        Order[Order Service]
+        Payment[Payment Service]
+        Search[Search Service]
+    end
+
+    subgraph Data Layer
+        UserDB[(User Database)]
+        ProductDB[(Product Database)]
+        OrderDB[(Order Database)]
+        Cache[(Redis Cache)]
+    end
+
+    UI --> API
+    Mobile --> API
+    
+    API --> Auth
+    API --> Product
+    API --> Order
+    API --> Payment
+    API --> Search
+    
+    Auth --> UserDB
+    Product --> ProductDB
+    Order --> OrderDB
+    
+    Product --> Cache
+    Search --> Cache
