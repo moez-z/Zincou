@@ -1,71 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
+import axios from "axios";
+import { useParams } from "react-router-dom";
 import ProductGrid from "./ProductGrid";
-import photo7 from "../../assets/photo7.webp";
-import photo8 from "../../assets/photo8.webp";
 
-import photoOne from "../../assets/photo1.webp";
-import photoTow from "../../assets/photo2.webp";
-import photoThree from "../../assets/photo3.webp";
-import photoFour from "../../assets/photo4.webp";
-import photoFive from "../../assets/photo1.webp";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchProductDetails,
+  fetchSimilarProducts,
+} from "../../redux/slices/productsSlice";
+import { addToCart } from "../../redux/slices/cartSlice";
 
-const selectedProduct = {
-  name: "Stylish Jacket",
-  price: 120,
-  originalPrice: 150,
-  description: "This is a stylish jacket perfect for any occasion",
-  brand: "Zincou",
-  material: "Leather",
-  sizes: ["S", "M", "L", "XL"],
-  colors: ["Red", "Black"],
-  images: [photo7, photo8],
-};
-
-const similarProducts = [
-  {
-    images: [photoOne],
-    name: "Cyrus Kuhlman",
-    price: "40665",
-    _id: "73502",
-  },
-  {
-    images: [photoTow],
-    name: "Mr. Kenneth Haag",
-    price: "08736",
-    _id: "96880",
-  },
-  {
-    images: [photoThree],
-    name: "Nasir Turcotte",
-    price: "19743",
-    _id: "58345",
-  },
-  {
-    images: [photoFour],
-    name: "Chase Gusikowski",
-    price: "60502",
-    _id: "94516",
-  },
-];
-
-const ProductDetails = () => {
+const ProductDetails = ({ productId }) => {
+  const { selectedProduct, loading, error, similarProducts } = useSelector(
+    (state) => state.products
+  );
+  const { user, guestId } = useSelector((state) => state.auth);
   const [mainImage, setMainImage] = useState();
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+  const { id } = useParams();
+  const dispatch = useDispatch();
+
+  const productFetchId = productId || id;
 
   useEffect(() => {
-    if (selectedProduct?.images?.length > 0) {
-      setMainImage(selectedProduct.images[0]);
+    if (productFetchId) {
+      dispatch(fetchProductDetails(productFetchId));
+      dispatch(fetchSimilarProducts(productFetchId));
     }
-    if (selectedProduct?.sizes?.length > 0) {
-      setSelectedSize(selectedProduct.sizes[0]);
-    }
-    if (selectedProduct?.colors?.length > 0) {
-      setSelectedColor(selectedProduct.colors[0]);
-    }
-  }, []);
+  }, [dispatch, productFetchId]);
 
   const decreaseQuantity = () => {
     if (quantity > 1) {
@@ -91,29 +56,65 @@ const ProductDetails = () => {
     toast.success(`Selected size: ${size}`);
   };
 
-  const addToCart = () => {
+  const handleAddToCart = () => {
     if (!selectedSize) {
       toast.error("Please select a size");
       return;
     }
-
     if (!selectedColor) {
       toast.error("Please select a color");
       return;
     }
 
-    toast.success(
-      `Added to cart: ${selectedProduct.name} - ${selectedColor}, Size ${selectedSize}, Quantity: ${quantity}`,
-      {
-        duration: 3000,
-        action: {
-          label: "View Cart",
-          onClick: () => console.log("View cart clicked"),
-        },
-      }
-    );
+   
+    dispatch(
+      addToCart({
+        productId: productFetchId,
+        quantity,
+        size: selectedSize,
+        color: selectedColor,
+        guestId,
+        userId: user?._id || null,
+      })
+    )
+      .then(() => {
+        toast.success(
+          `Added to cart: ${selectedProduct.name} - ${selectedColor}, Size ${selectedSize}, Quantity: ${quantity}`,
+          {
+            duration: 3000,
+            action: {
+              label: "View Cart",
+              onClick: () => console.log("View cart clicked"),
+            },
+          }
+        );
+      })
+      .finally(() => {
+        setSelectedSize("");
+        setSelectedColor("");
+        setQuantity(1);
+      });
   };
+  useEffect(() => {
+    if (
+      selectedProduct &&
+      selectedProduct.images &&
+      selectedProduct.images.length > 0
+    ) {
+      setMainImage(selectedProduct.images[0].url);
+    }
+  }, [selectedProduct]);
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  if (!selectedProduct) {
+    return <div>Loading product...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
   return (
     <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg">
       <div className="flex flex-col md:flex-row">
@@ -122,16 +123,17 @@ const ProductDetails = () => {
           {selectedProduct.images.map((image, index) => (
             <img
               key={index}
-              src={image}
+              src={image.url}
               alt={image.altText || `Thumbnail ${index}`}
               className={`w-20 h-20 object-cover rounded-lg cursor-pointer border ${
                 mainImage === image ? "border-black" : "border-gray-300"
               }`}
-              onClick={() => setMainImage(image)}
+              onClick={() => setMainImage(image.url)}
               aria-label={`Thumbnail ${index + 1}`}
             />
           ))}
         </div>
+
         {/* Main image */}
         <div className="md:w-1/2">
           <div className="mb-4">
@@ -150,21 +152,23 @@ const ProductDetails = () => {
             )}
           </div>
         </div>
+
         {/* Mobile thumbnails */}
         <div className="md:hidden flex overflow-x-scroll space-x-4 mb-4 snap-x snap-mandatory">
           {selectedProduct.images.map((image, index) => (
             <img
               key={index}
-              src={image}
+              src={image.url}
               alt={image.altText || `Thumbnail ${index}`}
               className={`w-20 h-20 object-cover rounded-lg cursor-pointer border snap-start ${
-                mainImage === image.url ? "border-black" : "border-gray-300"
+                mainImage === image ? "border-black" : "border-gray-300"
               }`}
-              onClick={() => setMainImage(image.url)}
+              onClick={() => setMainImage(image)}
               aria-label={`Thumbnail ${index + 1}`}
             />
           ))}
         </div>
+
         {/* Right side */}
         <div className="md:w-1/2 md:ml-10">
           <h1 className="text-2xl md:text-3xl font-semibold mb-2">
@@ -175,6 +179,7 @@ const ProductDetails = () => {
           </p>
           <p className="text-xl text-gray-500 mb-2">${selectedProduct.price}</p>
           <p className="text-gray-600 mb-4">{selectedProduct.description}</p>
+
           <div className="mb-4">
             <p className="text-gray-700">Colors:</p>
             <div className="flex gap-2 mt-2">
@@ -237,9 +242,10 @@ const ProductDetails = () => {
               </button>
             </div>
           </div>
+
           <button
             className="bg-black text-white py-2 px-6 rounded w-full mb-4 hover:bg-gray-800 transition-colors"
-            onClick={addToCart}
+            onClick={handleAddToCart}
             aria-label="Add to cart"
           >
             ADD TO CART
@@ -262,6 +268,7 @@ const ProductDetails = () => {
           </div>
         </div>
       </div>
+
       <div className="mt-20">
         <h2 className="text-2xl text-center font-medium mb-4">
           You May Also Like

@@ -1,24 +1,30 @@
-import React from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 
 const OurCollections = () => {
-  const collections = [
-    {
-      name: "Casual",
-      image: "https://picsum.photos/800/600?random=1",
-    },
-    {
-      name: "Formal",
-      image: "https://picsum.photos/800/600?random=2",
-    },
-    {
-      name: "Party",
-      image: "https://picsum.photos/800/600?random=3",
-    },
-    {
-      name: "Gym",
-      image: "https://picsum.photos/800/600?random=4",
-    },
-  ];
+  const [collections, setCollections] = useState([]);
+
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/products?limit=8`
+        );
+        setCollections(response.data);
+      } catch (error) {
+        console.error("Error fetching new arrivals:", error);
+      }
+    };
+
+    fetchCollections();
+  }, []);
+
+  const handleViewAll = () => {
+    // Navigate to collections page or handle view all logic
+    // You can replace this with your preferred navigation method
+    console.log("Navigate to all collections");
+    // Example: navigate("/collections") if using React Router
+  };
 
   return (
     <section className="w-full md:w-3/4 py-12 bg-blanc-1 dark:bg-gray-900 mx-auto md:ml-auto lg:ml-60 rounded-xl my-8 px-4">
@@ -40,7 +46,7 @@ const OurCollections = () => {
               className="relative overflow-hidden rounded-lg group shadow-md hover:shadow-xl transition-shadow duration-300"
             >
               <img
-                src={collection.image}
+                src={collection.images[0].url}
                 alt={collection.name}
                 className="w-full h-48 sm:h-56 md:h-64 lg:h-72 object-cover transform group-hover:scale-105 transition-transform duration-300"
               />
@@ -56,6 +62,30 @@ const OurCollections = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* View All Button */}
+        <div className="text-center mt-8 md:mt-12">
+          <button
+            onClick={handleViewAll}
+            className="inline-flex items-center px-6 py-3 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors duration-300"
+          >
+            View All Collections
+            <svg
+              className="ml-2 w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
         </div>
       </div>
     </section>

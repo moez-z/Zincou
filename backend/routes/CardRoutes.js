@@ -19,8 +19,7 @@ const getCard = async (userId, guestId) => {
 // @desc Add a product to cart for user
 // @access Public
 router.post("/", protect, async (req, res) => {
-  const { productId, quantity, size, color, guestId } = req.body;
-  const userId = req.user ? req.user._id : null;
+  const { productId, quantity, size, color, guestId, userId } = req.body;
 
   try {
     const product = await Product.findById(productId);
@@ -95,8 +94,7 @@ router.post("/", protect, async (req, res) => {
 // @desc Update a product in cart for user
 // @access Public
 router.put("/", protect, async (req, res) => {
-  const { productId, quantity, size, color, guestId } = req.body;
-  const userId = req.user ? req.user._id : null;
+  const { productId, quantity, size, color, guestId, userId } = req.body;
 
   try {
     let card = await getCard(userId, guestId);

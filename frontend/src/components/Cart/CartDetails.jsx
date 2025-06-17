@@ -1,39 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { fetchCart } from "../../redux/slices/cartSlice";
 
 const CartDetails = () => {
-  const [cart, setCart] = useState({
-    products: [
-      {
-        name: "Gradient Graphic T-shirt",
-        price: 145,
-        images: "https://picsum.photos/200?random=1",
-        size: "Large",
-        color: "White",
-        quantity: 1,
-      },
-      {
-        name: "Checkered Shirt",
-        price: 180,
-        images: "https://picsum.photos/200?random=2",
-        size: "Medium",
-        color: "Red",
-        quantity: 1,
-      },
-      {
-        name: "Skinny Fit Jeans",
-        price: 240,
-        images: "https://picsum.photos/200?random=3",
-        size: "Large",
-        color: "Blue",
-        quantity: 1,
-      },
-    ],
-    subtotal: 565,
-    discount: 113,
-    deliveryFee: 15,
-    total: 467,
-  });
+  const { selectedCart, loading, error } = useSelector((state) => state.cart);
+  const { user, guestId } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchCart({ userId: user?._id, guestId }));
+  }, [dispatch, user?._id, guestId]);
+
+  console.log( "here", selectedCart);
 
   const [promoCode, setPromoCode] = useState("");
   const navigate = useNavigate();
@@ -43,20 +22,12 @@ const CartDetails = () => {
     alert(`Applying promo code: ${promoCode}`);
   };
 
-  const handleQuantityChange = (index, action) => {
-    const updatedProducts = [...cart.products];
-    if (action === "increase") {
-      updatedProducts[index].quantity += 1;
-    } else if (action === "decrease" && updatedProducts[index].quantity > 1) {
-      updatedProducts[index].quantity -= 1;
-    }
-    setCart({ ...cart, products: updatedProducts });
-  };
+  const handleQuantityChange = (index, action) => {};
 
-  const handleDeleteItem = (index) => {
-    const updatedProducts = cart.products.filter((_, i) => i !== index);
-    setCart({ ...cart, products: updatedProducts });
-  };
+  const handleDeleteItem = (index) => {};
+
+  if (loading) return <div>Loading cart...</div>;
+  if (error) return <div>Error loading cart: {error}</div>;
 
   return (
     <div className="max-w-7xl mx-auto py-6 md:py-10 px-4 sm:px-6">
@@ -67,7 +38,7 @@ const CartDetails = () => {
             Order Details
           </h2>
           <div className="space-y-4 md:space-y-6">
-            {cart.products.map((product, index) => (
+            {selectedCart.products.map((product, index) => (
               <div
                 className="flex flex-col sm:flex-row items-start justify-between py-4 border-b last:border-b-0"
                 key={index}

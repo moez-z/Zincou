@@ -5,7 +5,7 @@ const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
-  const { name, email, password } = req.body;
+  const { firstName, email, password, lastName, address } = req.body;
 
   try {
     // registration logic
@@ -13,10 +13,9 @@ router.post("/register", async (req, res) => {
 
     if (user) return res.status(400).json({ message: "User already exists" });
 
-
-    user = new User({ name, email, password });
+    user = new User({ firstName, lastName, address, email, password });
     await user.save();
-
+    console.log("user", user);
     //create JWT payload
     const payload = { user: { _id: user._id, role: user.role } };
 
@@ -34,7 +33,7 @@ router.post("/register", async (req, res) => {
         res.status(201).json({
           user: {
             _id: user._id,
-            name: user.name,
+            firstName: user.name,
             email: user.email,
             role: user.role,
           },
@@ -54,14 +53,17 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
+  console.log(email, password);
+
   try {
     //find the user
     let user = await User.findOne({ email });
-    const isMatch = await user.matchPassword(password);
 
     if (!user) {
       return res.status(400).json({ message: "Invalid Credential" });
-    } else if (!isMatch) {
+    }
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
       return res.status(400).json({ message: "Invalid Credential" });
     } else {
       //create JWT payload

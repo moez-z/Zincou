@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { FaFilter } from "react-icons/fa";
 import FilterSidebar from "../components/Products/FilterSidebar";
 import SortOption from "./SortOption";
+import axios from "axios";
 
 const CollectionPage = () => {
   const [products, setProducts] = useState([]);
@@ -26,55 +27,18 @@ const CollectionPage = () => {
   }, []);
 
   useEffect(() => {
-    setTimeout(() => {
-      const fetchedProducts = [
-        {
-          _id: 1,
-          name: "Product 1",
-          price: 120,
-          images: [
-            {
-              url: "https://picsum.photos/500/500?random=1",
-              altText: "Product 1",
-            },
-          ],
-        },
-        {
-          _id: 2,
-          name: "Product 2",
-          price: 120,
-          images: [
-            {
-              url: "https://picsum.photos/500/500?random=2",
-              altText: "Product 2",
-            },
-          ],
-        },
-        {
-          _id: 3,
-          name: "Product 3",
-          price: 120,
-          images: [
-            {
-              url: "https://picsum.photos/500/500?random=3",
-              altText: "Product 3",
-            },
-          ],
-        },
-        {
-          _id: 4,
-          name: "Product 4",
-          price: 120,
-          images: [
-            {
-              url: "https://picsum.photos/500/500?random=4",
-              altText: "Product 4",
-            },
-          ],
-        },
-      ];
-      setProducts(fetchedProducts);
-    }, 1000);
+    const fetchCollections = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/products`
+        );
+        setProducts(response.data);
+      } catch (error) {
+        console.error("Error fetching new arrivals:", error);
+      }
+    };
+
+    fetchCollections();
   }, []);
 
   return (

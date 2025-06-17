@@ -25,7 +25,7 @@ const GenderCollectionSection = () => {
               Women's Collection
             </h2>
             <Link
-              to="/collection/all?gender=Women"
+              to="/collections/all?gender=Women"
               className="text-gray-900 underline"
             >
               Shop Now
@@ -45,7 +45,7 @@ const GenderCollectionSection = () => {
               Men's Collection
             </h2>
             <Link
-              to="/collection/all?gender=Men"
+              to="/collections/all?gender=Men"
               className="text-gray-900 underline"
             >
               Shop Now

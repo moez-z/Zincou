@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import login from "../../assets/login.webp";
 import { IoMdClose } from "react-icons/io";
+import { registerUser } from "../../redux/slices/authSlice";
+import { useDispatch } from "react-redux";
 
 const Register = ({
   showRegister,
@@ -14,10 +16,11 @@ const Register = ({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [address, setAddress] = useState("");
+  const dispatch = useDispatch();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("user", { firstName, lastName, email, address, password });
+    dispatch(registerUser({ email, password, firstName, lastName, address }));
   };
 
   const handleClose = () => {

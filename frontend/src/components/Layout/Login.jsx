@@ -3,15 +3,19 @@ import { Link } from "react-router-dom";
 import login from "../../assets/register.webp";
 import { IoMdClose } from "react-icons/io";
 import Register from "./Register";
+import { loginUser } from "../../redux/slices/authSlice";
+import { useDispatch } from "react-redux";
 
 const Login = ({ setLoginModalOpen, loginModalOpen }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showRegister, setShowRegister] = useState(false);
 
+  const dispatch = useDispatch();
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("user", { email, password });
+    dispatch(loginUser({ email, password }));
   };
   const handleClose = () => {
     setLoginModalOpen(!loginModalOpen);

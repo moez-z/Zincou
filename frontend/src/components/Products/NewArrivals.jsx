@@ -1,53 +1,27 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import photoOne from "../../assets/photo1.webp";
-import photoTow from "../../assets/photo2.webp";
-import photoThree from "../../assets/photo3.webp";
-import photoFour from "../../assets/photo4.webp";
-import photoFive from "../../assets/photo1.webp";
+import axios from "axios";
 
 const NewArrivals = () => {
   const scrollRef = useRef(null);
 
-  const newArrivals = [
-    {
-      images: [photoOne],
-      name: "Cyrus Kuhlman",
-      price: "40665",
-      _id: "73502",
-    },
-    {
-      images: [photoTow],
-      name: "Mr. Kenneth Haag",
-      price: "08736",
-      _id: "96880",
-    },
-    {
-      images: [photoThree],
-      name: "Nasir Turcotte",
-      price: "19743",
-      _id: "58345",
-    },
-    {
-      images: [photoFour],
-      name: "Chase Gusikowski",
-      price: "60502",
-      _id: "94516",
-    },
-    {
-      images: [photoFive],
-      name: "George Borer",
-      price: "20180",
-      _id: "42008",
-    },
-    {
-      images: [photoFive],
-      name: "Miss Yolanda Ferry",
-      price: "28378",
-      _id: "05947",
-    },
-  ];
+  const [newArrivals, setNewArrivals] = useState([]);
+
+  useEffect(() => {
+    const fetchNewArrivals = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/products/new-arrivals`
+        );
+        setNewArrivals(response.data);
+      } catch (error) {
+        console.error("Error fetching new arrivals:", error);
+      }
+    };
+
+    fetchNewArrivals();
+  }, []);
 
   const handleScroll = (direction) => {
     if (scrollRef.current) {
@@ -98,7 +72,7 @@ const NewArrivals = () => {
               className="min-w-[80%] sm:min-w-[45%] md:min-w-[30%] lg:min-w-[23%] xl:min-w-[20%] relative flex-shrink-0"
             >
               <img
-                src={product.images[0]}
+                src={product.images[0]?.url}
                 alt={product.name}
                 className="w-full h-[300px] sm:h-[350px] md:h-[400px] object-cover rounded-lg"
               />
