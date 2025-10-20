@@ -4,6 +4,9 @@ const jwt = require("jsonwebtoken");
 const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
 
+// @route POST api/users/register
+// @desc Register a new user
+// @access Public
 router.post("/register", async (req, res) => {
   const { firstName, email, password, lastName, address } = req.body;
 
@@ -16,11 +19,11 @@ router.post("/register", async (req, res) => {
     user = new User({ firstName, lastName, address, email, password });
     await user.save();
     console.log("user", user);
+
     //create JWT payload
     const payload = { user: { _id: user._id, role: user.role } };
 
-    //sign and return the token with user data
-
+    //sign the token
     jwt.sign(
       payload,
       process.env.JWT_SECRET,
@@ -28,16 +31,24 @@ router.post("/register", async (req, res) => {
       (err, token) => {
         if (err) throw err;
 
-        //send the user and token in resp
+        // ✅ NEW: Set token in httpOnly cookie
+        res.cookie("token", token, {
+          httpOnly: true, // Cannot be accessed by JavaScript
+          secure: process.env.NODE_ENV === "production", // Only HTTPS in production
+          sameSite: "strict", // CSRF protection
+          maxAge: 12 * 60 * 60 * 1000, // 12 hours in milliseconds
+        });
 
+        // ✅ NEW: Send only user data (no token in response body)
         res.status(201).json({
+          success: true,
           user: {
             _id: user._id,
-            firstName: user.name,
+            firstName: user.firstName,
+            lastName: user.lastName,
             email: user.email,
             role: user.role,
           },
-          token,
         });
       }
     );
@@ -62,40 +73,58 @@ router.post("/login", async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "Invalid Credential" });
     }
+
     const isMatch = await user.matchPassword(password);
+
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid Credential" });
-    } else {
-      //create JWT payload
-      const payload = { user: { _id: user._id, role: user.role } };
-
-      //sign and return the token with user data
-
-      jwt.sign(
-        payload,
-        process.env.JWT_SECRET,
-        { expiresIn: "12h" },
-        (err, token) => {
-          if (err) throw err;
-
-          //send the user and token in resp
-
-          res.json({
-            user: {
-              _id: user._id,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-            },
-            token,
-          });
-        }
-      );
     }
+
+    //create JWT payload
+    const payload = { user: { _id: user._id, role: user.role } };
+
+    //sign the token
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: "12h" },
+      (err, token) => {
+        if (err) throw err;
+
+        // ✅ NEW: Set token in httpOnly cookie
+        res.cookie("token", token, {
+          httpOnly: true, // Cannot be accessed by JavaScript
+          secure: process.env.NODE_ENV === "production", // Only HTTPS in production
+          sameSite: "strict", // CSRF protection
+          maxAge: 12 * 60 * 60 * 1000, // 12 hours in milliseconds
+        });
+
+        // ✅ NEW: Send only user data (no token in response body)
+        res.json({
+          success: true,
+          user: {
+            _id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+          },
+        });
+      }
+    );
   } catch (error) {
     console.error(error);
     res.status(500).send("server error");
   }
+});
+
+// @route POST api/users/logout
+// @desc Logout user (clear cookie)
+// @access Public
+// ✅ NEW: Logout route
+router.post("/logout", (req, res) => {
+  res.clearCookie("token");
+  res.json({ success: true, message: "Logged out successfully" });
 });
 
 // @route GET api/users/profile
@@ -103,6 +132,28 @@ router.post("/login", async (req, res) => {
 // @access Private
 router.get("/profile", protect, async (req, res) => {
   res.json(req.user);
+});
+
+// @route GET api/users/me
+// @desc Check if user is authenticated
+// @access Private
+// ✅ NEW: Check auth route (for frontend to verify session)
+router.get("/me", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    res.json({
+      success: true,
+      user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 module.exports = router;

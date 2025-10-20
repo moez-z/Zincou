@@ -24,10 +24,9 @@ router.post("/", protect, async (req, res) => {
       shippingAddress,
       paymentMethod,
       totalPrice,
-      paymentStatus: "Pending",
+      paymentStatus: "pending",
       isPaid: false,
     });
-    console.log(`Checkout created for user: ${req.user._id}`);
     res.status(201).json(newCheckout);
   } catch (error) {
     console.error(error);
@@ -93,12 +92,27 @@ router.post("/:id/finalize", protect, async (req, res) => {
       await checkout.save();
       await Cart.findOneAndDelete({ user: req.user._id });
 
-      res.status(200).json(finalOrder);
+      return res.status(200).json(finalOrder);
     } else if (checkout.isFinalized) {
       return res.status(400).json({ message: "Checkout is already finalized" });
     }
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// @route GET /api/checkout/:id
+// @desc Get checkout by id
+// @access Private
+router.get("/:id", protect, async (req, res) => {
+  try {
+    
+    const checkout = await Checkout.findById(req.params.id);
+    if (!checkout)
+      return res.status(404).json({ message: "Checkout not found" });
+    res.status(200).json(checkout);
+  } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
 });

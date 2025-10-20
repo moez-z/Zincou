@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const cookieParser = require("cookie-parser"); // ADD THIS
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
@@ -13,11 +14,19 @@ const adminRoutes = require("./routes/adminRoutes");
 const productAdminRoutes = require("./routes/productAdminRoutes");
 const orderAdminRoutes = require("./routes/orderAdminRoutes");
 
+dotenv.config(); // MOVE THIS UP (before using process.env)
+
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser()); // ADD THIS - Must be before routes
 
-dotenv.config();
+// UPDATE CORS configuration
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5173", // Your React app URL
+    credentials: true, // IMPORTANT: Allow cookies to be sent
+  })
+);
 
 const PORT = process.env.PORT || 3000;
 

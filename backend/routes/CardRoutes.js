@@ -18,7 +18,7 @@ const getCard = async (userId, guestId) => {
 // @route Post api/cards
 // @desc Add a product to cart for user
 // @access Public
-router.post("/", protect, async (req, res) => {
+router.post("/", async (req, res) => {
   const { productId, quantity, size, color, guestId, userId } = req.body;
 
   try {
@@ -33,9 +33,7 @@ router.post("/", protect, async (req, res) => {
     if (card) {
       const productIndex = card.products.findIndex(
         (p) =>
-          p.productId.toString() === productId &&
-          p.size === size &&
-          p.color === color
+          p._id.toString() === productId && p.size === size && p.color === color
       );
 
       if (productIndex > -1) {
@@ -45,7 +43,7 @@ router.post("/", protect, async (req, res) => {
       } else {
         // Add new product
         card.products.push({
-          productId,
+          _id: productId,
           name: product.name,
           image: product.images[0]?.url || product.images[0], // Handle both object and string formats
           price: product.price,
@@ -69,7 +67,7 @@ router.post("/", protect, async (req, res) => {
         guestId: guestId || "guest_" + new Date().getTime(),
         products: [
           {
-            productId,
+            _id: productId,
             name: product.name,
             image: product.images[0]?.url || product.images[0], // Handle both object and string formats
             price: product.price,
@@ -93,7 +91,7 @@ router.post("/", protect, async (req, res) => {
 // @route PUT api/cards
 // @desc Update a product in cart for user
 // @access Public
-router.put("/", protect, async (req, res) => {
+router.put("/", async (req, res) => {
   const { productId, quantity, size, color, guestId, userId } = req.body;
 
   try {
@@ -104,9 +102,7 @@ router.put("/", protect, async (req, res) => {
 
     const productIndex = card.products.findIndex(
       (p) =>
-        p.productId.toString() === productId &&
-        p.size === size &&
-        p.color === color
+        p._id.toString() === productId && p.size === size && p.color === color
     );
 
     if (productIndex > -1) {
@@ -137,10 +133,10 @@ router.put("/", protect, async (req, res) => {
 // @route DELETE api/cards
 // @desc Remove a product from cart for user
 // @access Public
-router.delete("/", protect, async (req, res) => {
+router.delete("/", async (req, res) => {
   const { productId, size, color, guestId } = req.body;
-  const userId = req.user ? req.user._id : null;
-
+  const userId = req.body.userId || null;
+  
   try {
     let card = await getCard(userId, guestId);
 
@@ -150,9 +146,7 @@ router.delete("/", protect, async (req, res) => {
 
     const productIndex = card.products.findIndex(
       (p) =>
-        p.productId.toString() === productId &&
-        p.size === size &&
-        p.color === color
+        p._id.toString() === productId && p.size === size && p.color === color
     );
 
     if (productIndex > -1) {
@@ -176,8 +170,8 @@ router.delete("/", protect, async (req, res) => {
 // @route GET api/cards
 // @desc Get cart for user
 // @access Public
-router.get("/", protect, async (req, res) => {
-  const userId = req.user ? req.user._id : null;
+router.get("/", async (req, res) => {
+  const userId = req.query.userId || null;
   const guestId = req.query.guestId || null;
 
   try {
@@ -186,7 +180,7 @@ router.get("/", protect, async (req, res) => {
     if (card) {
       return res.status(200).json(card);
     } else {
-      return res.status(404).json({ message: "Cart not found" });
+      return res.status(200).json({ message: "Cart not found" });
     }
   } catch (error) {
     console.error(error);
@@ -197,7 +191,7 @@ router.get("/", protect, async (req, res) => {
 // @route POST api/cards/merge
 // @desc Merge guest cart with user cart
 // @access Public
-router.post("/merge", protect, async (req, res) => {
+router.post("/merge", async (req, res) => {
   const userId = req.user ? req.user._id : null;
   const guestId = req.body.guestId;
 
