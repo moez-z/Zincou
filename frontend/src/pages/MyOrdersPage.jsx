@@ -1,64 +1,32 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { fetchUserOrders } from "../redux/slices/orderSlice";
 
 const MyOrdersPage = () => {
-  const [orders, setOrders] = useState([]);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { orders, loading, error } = useSelector((state) => state.orders);
 
   useEffect(() => {
-    setTimeout(() => {
-      const mockOrders = [
-        {
-          _id: "1234",
-          createdAt: new Date(),
-          shippingAddress: { city: "New York", country: "USA" },
-          orderItems: [
-            {
-              name: "Product 1",
-              image: "https://picsum.photos/500/500?random=1",
-            },
-            {
-              name: "Product 2",
-              image: "https://picsum.photos/500/500?random=2",
-            },
-          ],
-          totalPrice: 120, // Added totalPrice
-          status: "Delivered", // Added status
-        },
-        {
-          _id: "1235",
-          createdAt: new Date(),
-          shippingAddress: { city: "Los Angeles", country: "USA" },
-          orderItems: [
-            {
-              name: "Product 1",
-              image: "https://picsum.photos/500/500?random=3",
-            },
-          ],
-          totalPrice: 60, // Added totalPrice
-          status: "Shipped", // Added status
-        },
-        {
-          _id: "1236",
-          createdAt: new Date(),
-          shippingAddress: { city: "Chicago", country: "USA" },
-          orderItems: [
-            {
-              name: "Product 1",
-              image: "https://picsum.photos/500/500?random=4",
-            },
-          ],
-          totalPrice: 80, // Added totalPrice
-          status: "Processing", // Added status
-        },
-      ];
-      setOrders(mockOrders);
-    }, 1000);
-  }, []);
+    dispatch(fetchUserOrders());
+  }, [dispatch]);
 
   const handleRowClick = (orderId) => {
-    navigate(`/order/:${orderId}"`);
+    navigate(`/order/${orderId}`);
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <p className="text-red-500 text-center mt-8">{error}</p>;
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -67,27 +35,13 @@ const MyOrdersPage = () => {
         <table className="w-full text-sm text-left text-gray-500">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50">
             <tr>
-              <th scope="col" className="py-3 px-4 sm:px-6">
-                Image
-              </th>
-              <th scope="col" className="py-3 px-4 sm:px-6">
-                Order ID
-              </th>
-              <th scope="col" className="py-3 px-4 sm:px-6">
-                Created
-              </th>
-              <th scope="col" className="py-3 px-4 sm:px-6">
-                Shipping Address
-              </th>
-              <th scope="col" className="py-3 px-4 sm:px-6">
-                Items
-              </th>
-              <th scope="col" className="py-3 px-4 sm:px-6">
-                Price
-              </th>
-              <th scope="col" className="py-3 px-4 sm:px-6">
-                Status
-              </th>
+              <th className="py-3 px-4 sm:px-6">Image</th>
+              <th className="py-3 px-4 sm:px-6">Order ID</th>
+              <th className="py-3 px-4 sm:px-6">Created</th>
+              <th className="py-3 px-4 sm:px-6">Shipping Address</th>
+              <th className="py-3 px-4 sm:px-6">Items</th>
+              <th className="py-3 px-4 sm:px-6">Price</th>
+              <th className="py-3 px-4 sm:px-6">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -96,12 +50,12 @@ const MyOrdersPage = () => {
                 <tr
                   key={order._id}
                   onClick={() => handleRowClick(order._id)}
-                  className="bg-white border-b hover:bg-gray-50"
+                  className="bg-white border-b hover:bg-gray-50 cursor-pointer"
                 >
                   <td className="py-4 px-4 sm:px-6">
                     <img
-                      src={order.orderItems[0].image}
-                      alt={order.orderItems[0].name}
+                      src={order.orderitems[0]?.image}
+                      alt={order.orderitems[0]?.name}
                       className="w-10 h-10 sm:w-12 object-cover rounded-lg"
                     />
                   </td>
@@ -118,7 +72,7 @@ const MyOrdersPage = () => {
                       : "N/A"}
                   </td>
                   <td className="py-4 px-4 sm:px-6">
-                    {order.orderItems.length}
+                    {order.orderitems.length}
                   </td>
                   <td className="py-4 px-4 sm:px-6">${order.totalPrice}</td>
                   <td className="py-4 px-4 sm:px-6">

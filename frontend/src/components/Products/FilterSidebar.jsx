@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 
-// Data constants moved outside component
 const FILTER_DATA = {
   categories: [
     "T-Shirts",
@@ -32,31 +32,32 @@ const FILTER_DATA = {
     "Best Sellers",
   ],
   sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-  priceRange: {
-    min: 0,
-    max: 100,
-  },
+  priceRange: { min: 0, max: 100 },
+  genders: ["Men", "Women"], // ✅ Added genders
 };
 
 const FilterSidebar = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [expanded, setExpanded] = useState("category");
+
   const [filters, setFilters] = useState({
+    gender: "", // ✅ Added gender
     category: "",
     color: "",
-    size: [],
-    collection: "",
+    sizes: [],
+    collections: "",
     minPrice: FILTER_DATA.priceRange.min,
     maxPrice: FILTER_DATA.priceRange.max,
   });
 
   useEffect(() => {
-    // Parse filters from URL parameters
     const params = Object.fromEntries([...searchParams]);
     setFilters({
+      gender: params.gender || "",
       category: params.category || "",
       color: params.color || "",
-      collection: params.collection || "",
-      size: params.size ? params.size.split(",") : [],
+      collections: params.collections || "",
+      sizes: params.sizes ? params.sizes.split(",") : [],
       minPrice: params.minPrice
         ? parseInt(params.minPrice)
         : FILTER_DATA.priceRange.min,
@@ -66,190 +67,209 @@ const FilterSidebar = () => {
     });
   }, [searchParams]);
 
-  // Generic handler for simple filters
-  const handleFilterChange = (filterType, value) => {
-    const updatedFilters = { ...filters, [filterType]: value };
-    setFilters(updatedFilters);
-    updateSearchParams(updatedFilters);
-  };
-
-  // Special handler for size filter (toggle behavior)
-  const handleSizeToggle = (size) => {
-    const newSizes = filters.size.includes(size)
-      ? filters.size.filter((s) => s !== size)
-      : [...filters.size, size];
-
-    handleFilterChange("size", newSizes);
-  };
-
-  // Handler for price range slider
-  const handlePriceChange = (value) => {
-    const maxPrice = parseInt(value);
-    const updatedFilters = {
-      ...filters,
-      minPrice: FILTER_DATA.priceRange.min,
-      maxPrice,
-    };
-    setFilters(updatedFilters);
-    updateSearchParams(updatedFilters);
-  };
-
-  // Update URL parameters based on filter state
   const updateSearchParams = (updatedFilters) => {
     const newParams = {};
-
-    // Only add non-empty/default parameters to URL
+    if (updatedFilters.gender) newParams.gender = updatedFilters.gender;
     if (updatedFilters.category) newParams.category = updatedFilters.category;
     if (updatedFilters.color) newParams.color = updatedFilters.color;
-    if (updatedFilters.collection)
-      newParams.collection = updatedFilters.collection;
-    if (updatedFilters.size.length > 0)
-      newParams.size = updatedFilters.size.join(",");
+    if (updatedFilters.collections)
+      newParams.collections = updatedFilters.collections;
+    if (updatedFilters.sizes.length > 0)
+      newParams.sizes = updatedFilters.sizes.join(",");
     if (updatedFilters.minPrice > FILTER_DATA.priceRange.min)
       newParams.minPrice = updatedFilters.minPrice.toString();
     if (updatedFilters.maxPrice < FILTER_DATA.priceRange.max)
       newParams.maxPrice = updatedFilters.maxPrice.toString();
-
     setSearchParams(newParams);
   };
 
-  // Reusable filter section component
-  const FilterSection = ({ title, children, className = "" }) => (
-    <div className={`mb-6 border-b pb-4 border-gray-200 ${className}`}>
-      <h3 className="text-gray-800 font-medium mb-3">{title}</h3>
-      {children}
-    </div>
-  );
+  const handleFilterChange = (key, value) => {
+    const updated = { ...filters, [key]: value };
+    setFilters(updated);
+    updateSearchParams(updated);
+  };
 
-  // Function to determine if a color needs a dark checkmark
-  const needsDarkCheckmark = (color) => ["White", "Yellow"].includes(color);
+  const handleSizeToggle = (size) => {
+    const newSizes = filters.sizes.includes(size)
+      ? filters.sizes.filter((s) => s !== size)
+      : [...filters.sizes, size];
+    handleFilterChange("sizes", newSizes);
+  };
+
+  const handlePriceChange = (value) => {
+    const updated = { ...filters, maxPrice: parseInt(value) };
+    setFilters(updated);
+    updateSearchParams(updated);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      gender: "",
+      category: "",
+      color: "",
+      sizes: [],
+      collections: "",
+      minPrice: FILTER_DATA.priceRange.min,
+      maxPrice: FILTER_DATA.priceRange.max,
+    });
+    setSearchParams({});
+  };
+
+  const FilterSection = ({ title, id, children }) => {
+    const isOpen = expanded === id;
+    return (
+      <div className="border-b border-gray-200 py-3">
+        <button
+          onClick={() => setExpanded(isOpen ? null : id)}
+          className="flex justify-between items-center w-full text-left"
+        >
+          <h3 className="font-medium text-gray-800">{title}</h3>
+          {isOpen ? (
+            <ChevronUp className="w-4 h-4 text-gray-500" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-gray-500" />
+          )}
+        </button>
+        {isOpen && <div className="mt-3">{children}</div>}
+      </div>
+    );
+  };
 
   return (
-    <div className="w-full md:w-3/4 px-3 py-4 border border-gray-200 rounded-lg shadow-sm bg-white">
-      <div className="w-full">
-        {/* Category Filter */}
-        <FilterSection title="Category">
-          <div className="flex flex-wrap gap-2">
-            {FILTER_DATA.categories.map((category) => (
-              <label
-                key={category}
-                className={`px-3 py-2 rounded-md text-sm cursor-pointer transition-all ${
-                  filters.category === category
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="category"
-                  value={category}
-                  checked={filters.category === category}
-                  onChange={() => handleFilterChange("category", category)}
-                  className="sr-only"
-                />
-                {category}
-              </label>
-            ))}
-          </div>
-        </FilterSection>
-
-        {/* Price filter */}
-        <FilterSection title="Price Range">
-          <input
-            type="range"
-            name="priceRange"
-            min={FILTER_DATA.priceRange.min}
-            max={FILTER_DATA.priceRange.max}
-            value={filters.maxPrice}
-            onChange={(e) => handlePriceChange(e.target.value)}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-          />
-          <div className="flex justify-between text-gray-600 mt-2">
-            <span>${filters.minPrice}</span>
-            <span>${filters.maxPrice}</span>
-          </div>
-        </FilterSection>
-
-        {/* Color filter */}
-        <FilterSection title="Color">
-          <div className="grid grid-cols-5 gap-3">
-            {FILTER_DATA.colors.map((color) => (
-              <button
-                key={color}
-                type="button"
-                aria-label={`Select ${color} color`}
-                className={`w-10 h-10 rounded-full transition-all ${
-                  filters.color === color
-                    ? "ring-2 ring-offset-2 ring-blue-500 scale-105"
-                    : "hover:scale-105"
-                }`}
-                style={{
-                  backgroundColor: color.toLowerCase(),
-                  border: color === "White" ? "1px solid #e5e7eb" : "none",
-                }}
-                onClick={() => handleFilterChange("color", color)}
-              >
-                {filters.color === color && (
-                  <span
-                    className="flex justify-center items-center text-sm font-bold"
-                    style={{
-                      color: needsDarkCheckmark(color) ? "black" : "white",
-                    }}
-                  >
-                    ✓
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </FilterSection>
-
-        {/* Size filter */}
-        <FilterSection title="Size">
-          <div className="flex flex-wrap gap-2">
-            {FILTER_DATA.sizes.map((size) => (
-              <button
-                key={size}
-                type="button"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  filters.size.includes(size)
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                onClick={() => handleSizeToggle(size)}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-        </FilterSection>
-
-        {/* Collections Filter */}
-        <FilterSection title="Collection" className="mb-6">
-          <div className="flex flex-col space-y-2">
-            {FILTER_DATA.collections.map((collection) => (
-              <label
-                key={collection}
-                className={`px-3 py-2 rounded-md text-sm cursor-pointer transition-all ${
-                  filters.collection === collection
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="collection"
-                  value={collection}
-                  checked={filters.collection === collection}
-                  onChange={() => handleFilterChange("collection", collection)}
-                  className="sr-only"
-                />
-                {collection}
-              </label>
-            ))}
-          </div>
-        </FilterSection>
+    <div className="w-full md:w-80 bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
+        <button
+          onClick={handleClearFilters}
+          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+        >
+          <X size={14} /> Clear all
+        </button>
       </div>
+
+      {/* Gender Filter */}
+      <FilterSection title="Gender" id="gender">
+        <div className="flex gap-2">
+          {FILTER_DATA.genders.map((gender) => (
+            <button
+              key={gender}
+              className={`px-3 py-1.5 rounded-md text-sm ${
+                filters.gender === gender
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => handleFilterChange("gender", gender)}
+            >
+              {gender}
+            </button>
+          ))}
+        </div>
+      </FilterSection>
+
+      {/* Category Filter */}
+      <FilterSection title="Category" id="category">
+        <div className="flex flex-wrap gap-2">
+          {FILTER_DATA.categories.map((category) => (
+            <button
+              key={category}
+              className={`px-3 py-1.5 rounded-md text-sm ${
+                filters.category === category
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => handleFilterChange("category", category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </FilterSection>
+
+      {/* Price Filter */}
+      <FilterSection title="Price Range" id="price">
+        <input
+          type="range"
+          min={FILTER_DATA.priceRange.min}
+          max={FILTER_DATA.priceRange.max}
+          value={filters.maxPrice}
+          onChange={(e) => handlePriceChange(e.target.value)}
+          className="w-full accent-blue-600"
+        />
+        <div className="flex justify-between text-gray-600 text-sm mt-2">
+          <span>${filters.minPrice}</span>
+          <span>${filters.maxPrice}</span>
+        </div>
+      </FilterSection>
+
+      {/* Color Filter */}
+      <FilterSection title="Color" id="color">
+        <div className="grid grid-cols-6 gap-2">
+          {FILTER_DATA.colors.map((color) => (
+            <button
+              key={color}
+              style={{ backgroundColor: color.toLowerCase() }}
+              onClick={() => handleFilterChange("color", color)}
+              className={`w-8 h-8 rounded-full border ${
+                filters.color === color
+                  ? "ring-2 ring-blue-500 ring-offset-2"
+                  : "hover:scale-105 transition-transform"
+              } ${
+                color === "White" ? "border-gray-300" : "border-transparent"
+              }`}
+            >
+              {filters.color === color && (
+                <span
+                  className={`text-xs font-bold ${
+                    ["White", "Yellow"].includes(color)
+                      ? "text-black"
+                      : "text-white"
+                  }`}
+                >
+                  ✓
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </FilterSection>
+
+      {/* Size Filter */}
+      <FilterSection title="Size" id="size">
+        <div className="flex flex-wrap gap-2">
+          {FILTER_DATA.sizes.map((size) => (
+            <button
+              key={size}
+              onClick={() => handleSizeToggle(size)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                filters.sizes.includes(size)
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
+      </FilterSection>
+
+      {/* Collections Filter */}
+      <FilterSection title="Collection" id="collections">
+        <div className="flex flex-col gap-2">
+          {FILTER_DATA.collections.map((collection) => (
+            <button
+              key={collection}
+              className={`px-3 py-1.5 rounded-md text-sm text-left ${
+                filters.collections === collection
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => handleFilterChange("collections", collection)}
+            >
+              {collection}
+            </button>
+          ))}
+        </div>
+      </FilterSection>
     </div>
   );
 };

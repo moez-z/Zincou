@@ -2,12 +2,23 @@ import React from "react";
 import { IoMdClose } from "react-icons/io";
 import CartContents from "../Cart/CartContents";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const CartDrawer = ({ drawerOpen, toggleCartDrawer }) => {
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth); // Redux auth state
+  const token = localStorage.getItem("userToken"); // fallback token
+
   const handleCheckout = () => {
     toggleCartDrawer();
-    navigate("/my-cart");
+
+    if (!user && !token) {
+      // user not logged in → redirect to login
+      navigate("/login", { state: { from: "/my-cart" } });
+    } else {
+      // logged-in user → redirect to My Orders / Cart page
+      navigate("/my-cart");
+    }
   };
 
   return (
@@ -16,24 +27,28 @@ const CartDrawer = ({ drawerOpen, toggleCartDrawer }) => {
         drawerOpen ? "translate-x-0" : "translate-x-full"
       }`}
     >
-      {" "}
+      {/* Close Button */}
       <div className="flex justify-end p-4">
         <button onClick={toggleCartDrawer}>
-          <IoMdClose className="h-6 w-6 text-gray-600" />{" "}
+          <IoMdClose className="h-6 w-6 text-gray-600" />
         </button>
       </div>
-      {/*cart contents*/}
+
+      {/* Cart contents */}
       <div className="flex-grow p-4 overflow-y-auto">
-        <h2 className="text-xl font-semibold mb-4"> Your Cart </h2>
+        <h2 className="text-xl font-semibold mb-4">Your Cart</h2>
         <CartContents />
       </div>
-      {/* checkout button*/}
-      <div className="p-4 bg-white sticky bottom-0">
+
+      {/* Checkout button */}
+      <div className="p-4 bg-white sticky bottom-0 border-t">
+
+        
         <button
           onClick={handleCheckout}
-          className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800"
+          className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
         >
-          Chekout
+          Checkout
         </button>
       </div>
     </div>

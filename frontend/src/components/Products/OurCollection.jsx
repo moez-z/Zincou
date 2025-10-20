@@ -1,8 +1,10 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const OurCollections = () => {
   const [collections, setCollections] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -20,10 +22,7 @@ const OurCollections = () => {
   }, []);
 
   const handleViewAll = () => {
-    // Navigate to collections page or handle view all logic
-    // You can replace this with your preferred navigation method
-    console.log("Navigate to all collections");
-    // Example: navigate("/collections") if using React Router
+    navigate("/collections/all"); // ✅ Navigate to all collections
   };
 
   return (
@@ -46,7 +45,7 @@ const OurCollections = () => {
               className="relative overflow-hidden rounded-lg group shadow-md hover:shadow-xl transition-shadow duration-300"
             >
               <img
-                src={collection.images[0].url}
+                src={collection.images[0]?.url || "/placeholder.png"}
                 alt={collection.name}
                 className="w-full h-48 sm:h-56 md:h-64 lg:h-72 object-cover transform group-hover:scale-105 transition-transform duration-300"
               />

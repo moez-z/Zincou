@@ -6,14 +6,22 @@ import {
   HiMagnifyingGlass,
 } from "react-icons/hi2";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import CartDrawer from "../Layout/CartDrawer";
 import Login from "../Layout/Login";
 import { IoMdClose } from "react-icons/io";
+import ProfileSection from "../Layout/ProfileSection";
 
 const Navbar = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [navDrawerOpen, setNavDrawerOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+
+  // Get user from Redux store
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+
+  // Check if user is admin
+  const isAdmin = isAuthenticated && user?.role === "admin";
 
   const toggleNavDrawer = () => {
     setNavDrawerOpen(!navDrawerOpen);
@@ -80,15 +88,17 @@ const Navbar = () => {
           </div>
 
           {/*Right icons */}
-          <Link
-            to="/admin"
-            className="block bg-black px-2 rounded text-sm text-white"
-          >
-            Admin
-          </Link>
-          <button onClick={toggleLoginModal} className="hover:text-black">
-            <HiOutlineUser className="h-6 w-6 text-gray-700" />
-          </button>
+          {/* Admin Link - Only visible for admin users */}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="block bg-black px-3 py-1 rounded text-sm text-white hover:bg-gray-800 transition-colors font-medium"
+            >
+              Admin
+            </Link>
+          )}
+
+          <ProfileSection />
           <button
             onClick={toggleCartDrawer}
             className="relative hover:text-black"
@@ -157,6 +167,17 @@ const Navbar = () => {
             >
               New Arrivals
             </Link>
+
+            {/* Admin Link in Mobile Menu - Only for admins */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={toggleNavDrawer}
+                className="block bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors font-medium"
+              >
+                Admin Dashboard
+              </Link>
+            )}
           </nav>
         </div>
       </div>

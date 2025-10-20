@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// async thunk to fetch users orders
+// async thunk to fetch user's orders
 export const fetchUserOrders = createAsyncThunk(
   "orders/fetchUserOrders",
   async (_, { rejectWithValue }) => {
@@ -9,9 +9,7 @@ export const fetchUserOrders = createAsyncThunk(
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/orders`,
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-          },
+          withCredentials: true, // ✅ send session cookie
         }
       );
       return response.data;
@@ -21,7 +19,7 @@ export const fetchUserOrders = createAsyncThunk(
   }
 );
 
-//ASYNC THunk to fetch orders details by id
+// async thunk to fetch order details by id
 export const fetchOrdersDetails = createAsyncThunk(
   "orders/fetchOrdersDetails",
   async (orderId, { rejectWithValue }) => {
@@ -29,14 +27,14 @@ export const fetchOrdersDetails = createAsyncThunk(
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/orders/${orderId}`,
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-          },
+          withCredentials: true,
         }
       );
+
       return response.data;
     } catch (error) {
-      rejectWithValue(error.response?.data || error.message);
+      console.error("Error fetching order:", error); // ✅ Debug
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
@@ -45,6 +43,7 @@ const orderSlice = createSlice({
   name: "orders",
   initialState: {
     orders: [],
+    OrdersDetails: null,
     totalOrders: 0,
     loading: false,
     error: null,
@@ -63,20 +62,23 @@ const orderSlice = createSlice({
       })
       .addCase(fetchUserOrders.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload.message;
+        state.error = action.payload?.message || action.payload;
       })
       // fetch order details
       .addCase(fetchOrdersDetails.pending, (state) => {
+        console.log("fetchOrdersDetails.pending"); // ✅ Debug
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchOrdersDetails.fulfilled, (state, action) => {
+        console.log("fetchOrdersDetails.fulfilled", action.payload); // ✅ Debug
         state.loading = false;
-        state.fetchOrdersDetails = action.payload;
+        state.orderDetails = action.payload;
       })
       .addCase(fetchOrdersDetails.rejected, (state, action) => {
+        console.log("fetchOrdersDetails.rejected", action.payload); // ✅ Debug
         state.loading = false;
-        state.error = action.payload.message;
+        state.error = action.payload?.message || action.payload;
       });
   },
 });

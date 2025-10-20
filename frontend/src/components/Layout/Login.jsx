@@ -1,42 +1,42 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import login from "../../assets/register.webp";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { IoMdClose } from "react-icons/io";
-import Register from "./Register";
+import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../../redux/slices/authSlice";
-import { useDispatch } from "react-redux";
+import login from "../../assets/register.webp";
+import Register from "./Register";
 
 const Login = ({ setLoginModalOpen, loginModalOpen }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showRegister, setShowRegister] = useState(false);
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const { isAuthenticated, loading, error } = useSelector(
+    (state) => state.auth
+  );
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const redirectTo = location.state?.from || "/";
+      navigate(redirectTo);
+    }
+  }, [isAuthenticated, navigate, location.state]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     dispatch(loginUser({ email, password }));
   };
-  const handleClose = () => {
-    setLoginModalOpen(!loginModalOpen);
-  };
 
   const handleShowRegister = () => {
-    setShowRegister(!showRegister);
+    navigate("/register");
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl  shadow-2xl overflow-hidden w-full max-w-5xl flex h-screen relative">
-        {/* Close Button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-30"
-          aria-label="Close"
-        >
-          <IoMdClose className="h-6 w-6" />
-        </button>
-
+    <div className="bg-white flex items-center justify-center z-50">
+      <div className="bg-white shadow-2xl overflow-hidden w-full h-full max-w-5xl flex h-screen md:h-auto relative">
         {/* Left Side: Login Form */}
         <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-8 md:p-12">
           <form
@@ -48,8 +48,18 @@ const Login = ({ setLoginModalOpen, loginModalOpen }) => {
             </div>
             <h2 className="text-2xl font-bold text-center mb-6">Hey there!</h2>
             <p className="text-center mb-6">
-              Enter your username and password to login
+              Enter your email and password to login
             </p>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                {typeof error === "object"
+                  ? error.message || "Invalid email or password"
+                  : error}
+              </div>
+            )}
+
             <div className="mb-4">
               <label
                 htmlFor="email"
@@ -64,6 +74,8 @@ const Login = ({ setLoginModalOpen, loginModalOpen }) => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
                 placeholder="Enter your email address"
+                disabled={loading}
+                required
               />
             </div>
             <div className="mb-6">
@@ -80,19 +92,23 @@ const Login = ({ setLoginModalOpen, loginModalOpen }) => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
                 placeholder="Enter your password"
+                disabled={loading}
+                required
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-black text-white p-2 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+              className="w-full bg-black text-white p-2 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={loading}
             >
-              Sign In
+              {loading ? "Signing In..." : "Sign In"}
             </button>
             <p className="mt-6 text-center text-sm">
               Don't have an account?{" "}
               <button
                 onClick={handleShowRegister}
                 className="text-blue-500 hover:underline"
+                type="button"
               >
                 Register
               </button>
@@ -101,7 +117,7 @@ const Login = ({ setLoginModalOpen, loginModalOpen }) => {
         </div>
 
         {/* Right Side: Image */}
-        <div className="hidden md:block w-1/2 relative overflow-hidden rounded-l-3xl shadow-2xl">
+        <div className="hidden md:block w-1/2 relative overflow-hidden rounded-3xl m-2 shadow-2xl">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-900/70 to-indigo-900/70 z-10"></div>
           <div className="absolute inset-0 z-20 flex flex-col justify-center items-center p-12 text-white">
             <h2 className="text-4xl font-bold mb-6">Welcome to ZinCou</h2>
@@ -122,15 +138,6 @@ const Login = ({ setLoginModalOpen, loginModalOpen }) => {
             loading="lazy"
           />
         </div>
-
-        {showRegister && (
-          <Register
-            showRegister={showRegister}
-            setShowRegister={setShowRegister}
-            setLoginModalOpen={setLoginModalOpen}
-            loginModalOpen={loginModalOpen}
-          />
-        )}
       </div>
     </div>
   );
