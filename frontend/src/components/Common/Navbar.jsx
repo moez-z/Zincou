@@ -161,7 +161,7 @@ const Navbar = () => {
               On Sale
             </Link>
             <Link
-              to="#"
+              to="/new-arrivals"
               onClick={toggleNavDrawer}
               className="block text-gray-600 hover:text-black"
             >

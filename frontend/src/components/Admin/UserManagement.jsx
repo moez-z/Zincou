@@ -1,72 +1,120 @@
-import React, { useState } from "react";
-import { Trash2, UserPlus, Mail, Lock, User, ShieldCheck } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import {
+  Trash2,
+  UserPlus,
+  Mail,
+  Lock,
+  User,
+  ShieldCheck,
+  Home,
+  Phone,
+} from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addUser,
+  fetchUsers,
+  deleteUser,
+  updateUser,
+} from "../../redux/slices/adminSlice";
+import { FaCheckCircle, FaSignOutAlt } from "react-icons/fa";
 
 const UserManagement = () => {
-  // Added more sample users for better UI demonstration
-  const users = [
-    {
-      _id: 123,
-      name: "John Doe",
-      email: "john.doe@example.com",
-      role: "admin",
-    },
-    {
-      _id: 124,
-      name: "Sarah Johnson",
-      email: "sarah.j@example.com",
-      role: "customer",
-    },
-    {
-      _id: 125,
-      name: "Michael Smith",
-      email: "msmith@example.com",
-      role: "customer",
-    },
-    {
-      _id: 126,
-      name: "Emily Davis",
-      email: "emily.davis@example.com",
-      role: "admin",
-    },
-  ];
+  const dispatch = useDispatch();
+  const { users = [], loading } = useSelector((state) => state.admin);
 
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
+    address: "",
+    numeroPhone: "",
     email: "",
     password: "",
     role: "customer",
   });
 
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmType, setConfirmType] = useState(null); // "delete" | "role"
+  const [targetUserId, setTargetUserId] = useState(null);
+  const [newRole, setNewRole] = useState(null);
+  const [messageConfirm, setMessageConfirm] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
+  // ✅ Handle input change
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  // ✅ Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    setFormData({
-      name: "",
-      email: "",
-      password: "",
-      role: "customer",
-    });
-  };
+    setSubmitting(true);
 
-  const handleRoleChange = (userId, newRole) => {
-    console.log({ id: userId, role: newRole });
-  };
+    const result = await dispatch(addUser(formData));
+    setSubmitting(false);
 
-  const handleDeleteUser = (userId) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      console.log("Deleting user with id", userId);
+    if (addUser.fulfilled.match(result)) {
+      setFormData({
+        firstName: "",
+        lastName: "",
+        address: "",
+        numeroPhone: "",
+        email: "",
+        password: "",
+        role: "customer",
+      });
+      alert("✅ User added successfully!");
+      dispatch(fetchUsers());
+    } else {
+      alert("❌ Failed to add user");
     }
+  };
+
+  // ✅ Handle role change
+  const confirmRoleChange = (userId, newRole) => {
+    setConfirmType("role");
+    setTargetUserId(userId);
+    setNewRole(newRole);
+    setMessageConfirm("Are you sure you want to change this user’s role?");
+    setShowConfirmModal(true);
+  };
+
+  // ✅ Handle delete flow
+  const confirmDeleteUser = (userId) => {
+    setConfirmType("delete");
+    setTargetUserId(userId);
+    setMessageConfirm("Are you sure you want to delete this user?");
+    setShowConfirmModal(true);
+  };
+
+  const cancelConfirm = () => {
+    setShowConfirmModal(false);
+    setTargetUserId(null);
+    setNewRole(null);
+    setConfirmType(null);
+  };
+
+  const handleConfirm = async () => {
+    if (!targetUserId) return;
+
+    if (confirmType === "role") {
+      await dispatch(updateUser({ id: targetUserId, role: newRole }));
+      alert("✅ Role updated successfully!");
+    } else if (confirmType === "delete") {
+      await dispatch(deleteUser(targetUserId));
+      alert("🗑️ User deleted successfully!");
+    }
+
+    dispatch(fetchUsers());
+    cancelConfirm();
   };
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+      {/* Header */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
         <p className="text-gray-500">Add and manage system users</p>
@@ -80,76 +128,61 @@ const UserManagement = () => {
               <UserPlus size={20} className="text-blue-600 mr-2" />
               <h3 className="text-lg font-bold text-gray-800">Add New User</h3>
             </div>
+
             <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label
-                  htmlFor="name"
-                  className="block text-gray-700 font-medium mb-1"
-                >
-                  Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User size={16} className="text-gray-400" />
+              {[
+                {
+                  name: "firstName",
+                  label: "First Name",
+                  icon: User,
+                  type: "text",
+                },
+                {
+                  name: "lastName",
+                  label: "Last Name",
+                  icon: User,
+                  type: "text",
+                },
+                { name: "email", label: "Email", icon: Mail, type: "email" },
+                {
+                  name: "numeroPhone",
+                  label: "Phone Number",
+                  icon: Phone,
+                  type: "text",
+                },
+                { name: "address", label: "Address", icon: Home, type: "text" },
+                {
+                  name: "password",
+                  label: "Password",
+                  icon: Lock,
+                  type: "password",
+                },
+              ].map((field) => (
+                <div key={field.name} className="mb-4">
+                  <label
+                    htmlFor={field.name}
+                    className="block text-gray-700 font-medium mb-1"
+                  >
+                    {field.label}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <field.icon size={16} className="text-gray-400" />
+                    </div>
+                    <input
+                      type={field.type}
+                      id={field.name}
+                      name={field.name}
+                      value={formData[field.name]}
+                      onChange={handleChange}
+                      className="pl-10 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      required
+                    />
                   </div>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="pl-10 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder="Enter full name"
-                    required
-                  />
                 </div>
-              </div>
-              <div className="mb-4">
-                <label
-                  htmlFor="email"
-                  className="block text-gray-700 font-medium mb-1"
-                >
-                  Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail size={16} className="text-gray-400" />
-                  </div>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="pl-10 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder="email@example.com"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="mb-4">
-                <label
-                  htmlFor="password"
-                  className="block text-gray-700 font-medium mb-1"
-                >
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock size={16} className="text-gray-400" />
-                  </div>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="pl-10 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder="Minimum 8 characters"
-                    required
-                  />
-                </div>
-              </div>
+              ))}
+
+              {/* Role select */}
               <div className="mb-4">
                 <label
                   htmlFor="role"
@@ -173,12 +206,22 @@ const UserManagement = () => {
                   </select>
                 </div>
               </div>
+
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+                disabled={submitting}
+                className={`w-full ${
+                  submitting ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+                } text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center`}
               >
-                <UserPlus size={18} className="mr-2" />
-                Add User
+                {submitting ? (
+                  "Adding..."
+                ) : (
+                  <>
+                    <UserPlus size={18} className="mr-2" />
+                    Add User
+                  </>
+                )}
               </button>
             </form>
           </div>
@@ -190,107 +233,114 @@ const UserManagement = () => {
             <div className="p-4 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-800">User List</h3>
               <p className="text-gray-500 text-sm">
-                {users.length} users found
+                {loading ? "Loading users..." : `${users.length} users found`}
               </p>
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr
-                      key={user._id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="p-4 font-medium text-gray-900 whitespace-nowrap">
-                        {user.name}
-                      </td>
-                      <td className="p-4 text-gray-700">{user.email}</td>
-                      <td className="p-4">
-                        <select
-                          value={user.role}
-                          onChange={(e) =>
-                            handleRoleChange(user._id, e.target.value)
-                          }
-                          className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        >
-                          <option value="customer">Customer</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                      </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => handleDeleteUser(user._id)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded flex items-center transition-colors"
-                        >
-                          <Trash2 size={16} className="mr-1" />
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
 
-            {/* Pagination */}
-            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200">
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">1</span> to{" "}
-                    <span className="font-medium">{users.length}</span> of{" "}
-                    <span className="font-medium">{users.length}</span> users
-                  </p>
-                </div>
-                <div>
-                  <nav
-                    className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                    aria-label="Pagination"
-                  >
-                    <a
-                      href="#"
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                    >
-                      <span className="sr-only">Previous</span>
-                      &laquo;
-                    </a>
-                    <a
-                      href="#"
-                      aria-current="page"
-                      className="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-                    >
-                      1
-                    </a>
-                    <a
-                      href="#"
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                    >
-                      <span className="sr-only">Next</span>
-                      &raquo;
-                    </a>
-                  </nav>
-                </div>
-              </div>
+            <div className="overflow-x-auto">
+              {users.length === 0 && !loading ? (
+                <p className="text-center py-6 text-gray-500">
+                  No users available.
+                </p>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      {[
+                        "Full Name",
+                        "Email",
+                        "Phone",
+                        "Address",
+                        "Role",
+                        "Actions",
+                      ].map((header) => (
+                        <th
+                          key={header}
+                          className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {users.map((user) => (
+                      <tr
+                        key={user._id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="p-4 font-medium text-gray-900 whitespace-nowrap">
+                          {user.firstName} {user.lastName}
+                        </td>
+                        <td className="p-4 text-gray-700">{user.email}</td>
+                        <td className="p-4 text-gray-700">
+                          {user.numeroPhone}
+                        </td>
+                        <td className="p-4 text-gray-700">{user.address}</td>
+                        <td className="p-4">
+                          <select
+                            value={user.role}
+                            onChange={(e) =>
+                              confirmRoleChange(user._id, e.target.value)
+                            }
+                            className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          >
+                            <option value="customer">Customer</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </td>
+                        <td className="p-4">
+                          <button
+                            onClick={() => confirmDeleteUser(user._id)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded flex items-center transition-colors"
+                          >
+                            <Trash2 size={16} className="mr-1" />
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <FaCheckCircle className="text-red-600 text-2xl" />
+              </div>
+
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Confirmation
+              </h3>
+              <p className="text-gray-600 text-center mb-6">{messageConfirm}</p>
+
+              <div className="flex gap-4 w-full">
+                <button
+                  onClick={cancelConfirm}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

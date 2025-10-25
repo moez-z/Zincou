@@ -1,20 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchProductById,
-  updateProduct,
-  clearSuccess,
-  clearError,
-} from "../../redux/slices/adminProductSlice";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { createProduct } from "../../redux/slices/adminProductSlice";
 
-const EditProduct = () => {
-  const { selectedProduct, loading, error, success } = useSelector(
-    (state) => state.adminProducts
-  );
+const AddProduct = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { id } = useParams();
 
   const [productData, setProductData] = useState({
     name: "",
@@ -36,64 +25,6 @@ const EditProduct = () => {
     numReviews: 0,
     images: [],
   });
-
-  // Fetch product on component mount
-  useEffect(() => {
-    if (id) {
-      dispatch(fetchProductById(id));
-    }
-  }, [dispatch, id]);
-
-  // Populate form when product is loaded
-  useEffect(() => {
-    if (selectedProduct) {
-      setProductData({
-        name: selectedProduct.name || "",
-        description: selectedProduct.description || "",
-        price: selectedProduct.price || "",
-        discountPrice: selectedProduct.discountPrice || "",
-        countInStock: selectedProduct.countInStock || 0,
-        sku: selectedProduct.sku || "",
-        category: selectedProduct.category || "",
-        material: selectedProduct.material || "",
-        gender: selectedProduct.gender || "",
-        sizes: selectedProduct.sizes || [],
-        colors: selectedProduct.colors || [],
-        collections: selectedProduct.collections || [],
-        tags: selectedProduct.tags || [],
-        isFeatured: selectedProduct.isFeatured || false,
-        isPublished: selectedProduct.isPublished || false,
-        rating: selectedProduct.rating || "",
-        numReviews: selectedProduct.numReviews || 0,
-        images: selectedProduct.images || [],
-      });
-    }
-  }, [selectedProduct]);
-
-  // Handle success/error notifications
-  useEffect(() => {
-    if (success) {
-      alert("Product updated successfully!");
-      dispatch(clearSuccess());
-      // Optionally navigate back to products list
-      // navigate("/admin/products");
-    }
-  }, [success, dispatch, navigate]);
-
-  useEffect(() => {
-    if (error) {
-      alert(`Error: ${error}`);
-      dispatch(clearError());
-    }
-  }, [error, dispatch]);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setProductData((prevData) => ({
-      ...prevData,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -124,45 +55,25 @@ const EditProduct = () => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    // Validate required fields
-    if (!productData.name || !productData.description || !productData.price) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
-    // Dispatch update action
-    dispatch(
-      updateProduct({
-        id,
-        productData,
-      })
-    );
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setProductData((prevData) => ({
+      ...prevData,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  // Show loading state
-  if (loading && !selectedProduct) {
-    return (
-      <div className="max-w-5xl mx-auto p-6">
-        <p className="text-center text-xl">Loading product...</p>
-      </div>
-    );
-  }
+  console.log(productData);
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    dispatch(createProduct(productData));
 
-  // Show error if product not found
-  if (!loading && !selectedProduct && error) {
-    return (
-      <div className="max-w-5xl mx-auto p-6">
-        <p className="text-center text-xl text-red-500">Product not found</p>
-      </div>
-    );
-  }
+    // Handle form submission logic here
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-6 shadow-md rounded-md bg-white">
-      <h2 className="text-3xl font-bold mb-6">Edit Product</h2>
+      <h2 className="text-3xl font-bold mb-6">Add New Product</h2>
       <form onSubmit={handleSubmit}>
         {/* Basic Information */}
         <div className="mb-8">
@@ -176,8 +87,8 @@ const EditProduct = () => {
               type="text"
               name="name"
               value={productData.name}
-              className="w-full border border-gray-300 rounded-md p-2"
               onChange={handleChange}
+              className="w-full border border-gray-300 rounded-md p-2"
               required
             />
           </div>
@@ -201,8 +112,8 @@ const EditProduct = () => {
                 type="number"
                 name="price"
                 value={productData.price}
-                className="w-full border border-gray-300 rounded-md p-2"
                 onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2"
                 min="0"
                 step="0.01"
                 required
@@ -214,8 +125,8 @@ const EditProduct = () => {
                 type="number"
                 name="discountPrice"
                 value={productData.discountPrice}
-                className="w-full border border-gray-300 rounded-md p-2"
                 onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2"
                 min="0"
                 step="0.01"
               />
@@ -231,8 +142,8 @@ const EditProduct = () => {
                 type="number"
                 name="countInStock"
                 value={productData.countInStock}
-                className="w-full border border-gray-300 rounded-md p-2"
                 onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2"
                 min="0"
                 required
               />
@@ -243,8 +154,8 @@ const EditProduct = () => {
                 type="text"
                 name="sku"
                 value={productData.sku}
-                className="w-full border border-gray-300 rounded-md p-2"
                 onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2"
                 required
               />
             </div>
@@ -257,8 +168,8 @@ const EditProduct = () => {
                 type="text"
                 name="category"
                 value={productData.category}
-                className="w-full border border-gray-300 rounded-md p-2"
                 onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2"
                 required
               />
             </div>
@@ -268,8 +179,8 @@ const EditProduct = () => {
                 type="text"
                 name="material"
                 value={productData.material}
-                className="w-full border border-gray-300 rounded-md p-2"
                 onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2"
                 required
               />
             </div>
@@ -305,14 +216,9 @@ const EditProduct = () => {
             <input
               type="text"
               name="sizes"
-              value={productData.sizes.join(", ")}
+              value={productData.sizes}
+              onChange={handleChange}
               className="w-full border border-gray-300 rounded-md p-2"
-              onChange={(e) =>
-                setProductData({
-                  ...productData,
-                  sizes: e.target.value.split(",").map((size) => size.trim()),
-                })
-              }
               placeholder="e.g., S, M, L, XL"
               required
             />
@@ -325,16 +231,9 @@ const EditProduct = () => {
             <input
               type="text"
               name="colors"
-              value={productData.colors.join(", ")}
+              value={productData.colors}
+              onChange={handleChange}
               className="w-full border border-gray-300 rounded-md p-2"
-              onChange={(e) =>
-                setProductData({
-                  ...productData,
-                  colors: e.target.value
-                    .split(",")
-                    .map((color) => color.trim()),
-                })
-              }
               placeholder="e.g., Red, Blue, Black"
               required
             />
@@ -347,16 +246,9 @@ const EditProduct = () => {
             <input
               type="text"
               name="collections"
-              value={productData.collections.join(", ")}
+              value={productData.collections}
+              onChange={handleChange}
               className="w-full border border-gray-300 rounded-md p-2"
-              onChange={(e) =>
-                setProductData({
-                  ...productData,
-                  collections: e.target.value
-                    .split(",")
-                    .map((col) => col.trim()),
-                })
-              }
               placeholder="e.g., Summer 2024, New Arrivals"
               required
             />
@@ -369,14 +261,9 @@ const EditProduct = () => {
             <input
               type="text"
               name="tags"
-              value={productData.tags.join(", ")}
+              value={productData.tags}
+              onChange={handleChange}
               className="w-full border border-gray-300 rounded-md p-2"
-              onChange={(e) =>
-                setProductData({
-                  ...productData,
-                  tags: e.target.value.split(",").map((tag) => tag.trim()),
-                })
-              }
               placeholder="e.g., trending, sale, bestseller"
             />
           </div>
@@ -418,8 +305,8 @@ const EditProduct = () => {
                 type="number"
                 name="rating"
                 value={productData.rating}
-                className="w-full border border-gray-300 rounded-md p-2"
                 onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2"
                 min="0"
                 max="5"
                 step="0.1"
@@ -433,8 +320,8 @@ const EditProduct = () => {
                 type="number"
                 name="numReviews"
                 value={productData.numReviews}
-                className="w-full border border-gray-300 rounded-md p-2"
                 onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2"
                 min="0"
                 readOnly
               />
@@ -516,18 +403,13 @@ const EditProduct = () => {
 
         <button
           type="submit"
-          disabled={loading}
-          className={`w-full py-3 rounded-md font-semibold transition-colors ${
-            loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-green-500 hover:bg-green-600 text-white"
-          }`}
+          className={`w-full py-3 rounded-md font-semibold transition-colors bg-green-500 hover:bg-green-600 text-white `}
         >
-          {loading ? "Updating..." : "Update Product"}
+          Add Product
         </button>
       </form>
     </div>
   );
 };
 
-export default EditProduct;
+export default AddProduct;

@@ -7,7 +7,7 @@ export const fetchUserOrders = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/orders`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/orders/my-orders`,
         {
           withCredentials: true, // ✅ send session cookie
         }
@@ -66,17 +66,15 @@ const orderSlice = createSlice({
       })
       // fetch order details
       .addCase(fetchOrdersDetails.pending, (state) => {
-        console.log("fetchOrdersDetails.pending"); // ✅ Debug
+        // ✅ Debug
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchOrdersDetails.fulfilled, (state, action) => {
-        console.log("fetchOrdersDetails.fulfilled", action.payload); // ✅ Debug
         state.loading = false;
-        state.orderDetails = action.payload;
+        state.orders = action.payload;
       })
       .addCase(fetchOrdersDetails.rejected, (state, action) => {
-        console.log("fetchOrdersDetails.rejected", action.payload); // ✅ Debug
         state.loading = false;
         state.error = action.payload?.message || action.payload;
       });

@@ -6,7 +6,7 @@ import { fetchUserOrders } from "../redux/slices/orderSlice";
 const MyOrdersPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { orders, loading, error } = useSelector((state) => state.orders);
+  const { orders, loading, error } = useSelector((state) => state.order);
 
   useEffect(() => {
     dispatch(fetchUserOrders());
@@ -54,8 +54,8 @@ const MyOrdersPage = () => {
                 >
                   <td className="py-4 px-4 sm:px-6">
                     <img
-                      src={order.orderitems[0]?.image}
-                      alt={order.orderitems[0]?.name}
+                      src={order.orderItems[0]?.image}
+                      alt={order.orderItems[0]?.name}
                       className="w-10 h-10 sm:w-12 object-cover rounded-lg"
                     />
                   </td>
@@ -72,7 +72,7 @@ const MyOrdersPage = () => {
                       : "N/A"}
                   </td>
                   <td className="py-4 px-4 sm:px-6">
-                    {order.orderitems.length}
+                    {order.orderItems.length}
                   </td>
                   <td className="py-4 px-4 sm:px-6">${order.totalPrice}</td>
                   <td className="py-4 px-4 sm:px-6">

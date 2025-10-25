@@ -1,45 +1,24 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, DollarSign, Package, ShoppingCart } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { getTotalRevenue, orderSummary } from "../redux/slices/adminOrderSlice";
 
 const AdminHomePage = () => {
-  const orders = [
-    {
-      _id: 123,
-      user: {
-        name: "John Doe",
-      },
-      totalPrice: 110,
-      status: "Processing",
-    },
-  ];
+  const { totalRevenue, paidOrdersCount, lastOrders, totalOrders } =
+    useSelector((state) => state.adminOrders);
+  const dispatch = useDispatch();
 
-  // More realistic data
-  const additionalOrders = [
-    {
-      _id: 124,
-      user: {
-        name: "Sarah Johnson",
-      },
-      totalPrice: 245.5,
-      status: "Delivered",
-    },
-    {
-      _id: 125,
-      user: {
-        name: "Michael Smith",
-      },
-      totalPrice: 89.99,
-      status: "Pending",
-    },
-  ];
+  useEffect(() => {
+    dispatch(getTotalRevenue());
+  }, [dispatch]);
 
-  const allOrders = [...orders, ...additionalOrders];
+  useEffect(() => {
+    dispatch(orderSummary());
+  }, [dispatch]);
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Processing":
-        return "bg-yellow-100 text-yellow-800";
       case "Delivered":
         return "bg-green-100 text-green-800";
       case "Pending":
@@ -68,8 +47,10 @@ const AdminHomePage = () => {
               Total Revenue
             </h2>
           </div>
-          <p className="text-3xl font-bold text-gray-800">$10,000</p>
-          <p className="text-green-500 text-sm mt-2">+12% from last month</p>
+          <p className="text-3xl font-bold text-gray-800">{totalRevenue}</p>
+          <p className="text-green-500 text-sm mt-2">
+            for a {paidOrdersCount} orders
+          </p>
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
@@ -81,7 +62,7 @@ const AdminHomePage = () => {
               Total Orders
             </h2>
           </div>
-          <p className="text-3xl font-bold text-gray-800">200</p>
+          <p className="text-3xl font-bold text-gray-800">{totalOrders}</p>
           <Link
             to="/admin/orders"
             className="mt-2 inline-flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm"
@@ -142,8 +123,8 @@ const AdminHomePage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {allOrders.length > 0 ? (
-                allOrders.map((order) => (
+              {lastOrders.length > 0 ? (
+                lastOrders.map((order) => (
                   <tr key={order._id} className="hover:bg-gray-50">
                     <td className="py-4 px-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       #{order._id}

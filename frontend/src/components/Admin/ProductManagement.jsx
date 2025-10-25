@@ -1,43 +1,38 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Edit, Trash2, Plus, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  deleteProduct,
+  fetchAdminProducts,
+} from "../../redux/slices/adminProductSlice";
+import { use } from "react";
+import { FaSignOutAlt, FaTrash } from "react-icons/fa";
 
 const ProductManagement = () => {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [productIdToDelete, setProductIdToDelete] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState("");
+  const { products } = useSelector((state) => state.adminProducts);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // Removed category attribute from product data
-  const products = [
-    {
-      _id: 123,
-      name: "Premium Leather Wallet",
-      price: "$87.99",
-      sku: "LTHR-585",
-    },
-    {
-      _id: 1234,
-      name: "Wireless Headphones",
-      price: "$129.99",
-      sku: "AUDIO-127",
-    },
-    {
-      _id: 1235,
-      name: "Organic Cotton T-Shirt",
-      price: "$34.50",
-      sku: "APRL-342",
-    },
-    {
-      _id: 1236,
-      name: "Stainless Steel Water Bottle",
-      price: "$27.99",
-      sku: "HYDRO-186",
-    },
-  ];
+  useEffect(() => {
+    dispatch(fetchAdminProducts());
+  }, [dispatch]);
 
-  const handleDeleteProduct = (productId) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      console.log("Deleting product with id", productId);
-    }
+  const handleShowConfirm = (productId) => {
+    setShowDeleteConfirm(true);
+    setProductIdToDelete(productId);
+  };
+
+  const handleDelete = (id) => {
+    console.log(id);
+    dispatch(deleteProduct(id));
+    setShowDeleteConfirm(false);
+    setProductIdToDelete(null);
   };
 
   const filteredProducts = products.filter(
@@ -45,6 +40,8 @@ const ProductManagement = () => {
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.sku.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const cancelLogout = () => setShowDeleteConfirm(false);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -55,7 +52,10 @@ const ProductManagement = () => {
           </h2>
           <p className="text-gray-500">Manage your product inventory</p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors">
+        <button
+          onClick={() => navigate("/admin/products/add-new")}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+        >
           <Plus size={18} className="mr-2" />
           Add Product
         </button>
@@ -127,7 +127,7 @@ const ProductManagement = () => {
                         Edit
                       </Link>
                       <button
-                        onClick={() => handleDeleteProduct(product._id)}
+                        onClick={() => handleShowConfirm(product._id)}
                         className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded flex items-center transition-colors"
                       >
                         <Trash2 size={16} className="mr-1" />
@@ -190,6 +190,44 @@ const ProductManagement = () => {
           </div>
         </div>
       </div>
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div className="flex flex-col items-center">
+              {/* Icon */}
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <FaTrash className="text-red-600 text-2xl" />
+              </div>
+
+              {/* Title */}
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Confirm Delete
+              </h3>
+
+              {/* Message */}
+              <p className="text-gray-600 text-center mb-6">
+                Are you sure you want to delete this product?
+              </p>
+
+              {/* Buttons */}
+              <div className="flex gap-4 w-full">
+                <button
+                  onClick={cancelLogout}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(productIdToDelete)}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

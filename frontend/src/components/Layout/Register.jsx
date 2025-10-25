@@ -16,6 +16,7 @@ const Register = ({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [address, setAddress] = useState("");
+  const [numeroPhone, setNumeroPhone] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
@@ -32,7 +33,16 @@ const Register = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(registerUser({ email, password, firstName, lastName, address }));
+    dispatch(
+      registerUser({
+        email,
+        password,
+        firstName,
+        lastName,
+        address,
+        numeroPhone,
+      })
+    );
   };
 
   const handleClose = () => {
@@ -139,6 +149,23 @@ const Register = ({
                     onChange={(e) => setAddress(e.target.value)}
                     className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
                     placeholder="Enter your address"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="address"
+                    className="block text-sm font-semibold mb-2"
+                  >
+                    Numero Phone
+                  </label>
+                  <input
+                    type="text"
+                    id="numeroPhone"
+                    value={numeroPhone}
+                    onChange={(e) => setNumeroPhone(e.target.value)}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
+                    placeholder="Enter your number phone"
                     required
                   />
                 </div>

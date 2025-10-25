@@ -26,6 +26,9 @@ import EditProduct from "./components/Admin/EditProduct";
 import OrderManagement from "./components/Admin/OrderManagement";
 import Login from "./components/Layout/Login";
 import EditProfile from "./pages/EditProfile";
+import NewArrivals from "./components/Products/NewArrivals";
+import AddProduct from "./components/Admin/AddProduct";
+import OrderDetailsMan from "./components/Admin/OrderDetailsMan";
 
 // 🔒 ProtectedRoute wrapper
 const ProtectedRoute = ({ children }) => {
@@ -85,6 +88,7 @@ function AppRoutes() {
             />
             <Route path="collections/all" element={<CollectionPage />} />
             <Route path="product/:id" element={<ProductDetails />} />
+            <Route path="new-arrivals" element={<NewArrivals />} />
             <Route
               path="checkout"
               element={
@@ -128,6 +132,8 @@ function AppRoutes() {
             <Route path="users" element={<UserManagement />} />
             <Route path="products" element={<ProductManagement />} />
             <Route path="products/:id/edit" element={<EditProduct />} />
+            <Route path="order/:id" element={<OrderDetailsMan />} />
+            <Route path="products/add-new" element={<AddProduct />} />
             <Route path="orders" element={<OrderManagement />} />
           </Route>
 

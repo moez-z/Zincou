@@ -2,15 +2,12 @@ import React, { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrdersDetails } from "../redux/slices/orderSlice";
+import { motion } from "framer-motion";
 
-const OrderDetailsPage = () => {
+const OrdersPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const {
-    fetchOrdersDetails: orderDetails,
-    loading,
-    error,
-  } = useSelector((state) => state.orders);
+  const { orders, loading, error } = useSelector((state) => state.order);
 
   useEffect(() => {
     dispatch(fetchOrdersDetails(id));
@@ -28,107 +25,153 @@ const OrderDetailsPage = () => {
     return <p className="text-red-500 text-center mt-8">{error}</p>;
   }
 
-  if (!orderDetails) {
+  if (!orders) {
     return <p className="text-center mt-8">No order details found</p>;
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6">
-      <h2 className="text-2xl md:text-3xl font-bold mb-6">Order Details</h2>
-
-      {/* Order Info */}
-      <div className="flex flex-col sm:flex-row justify-between mb-8">
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="max-w-6xl mx-auto p-6 md:p-8 bg-white shadow-lg rounded-2xl mt-8"
+    >
+      <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
         <div>
-          <h3 className="text-lg md:text-xl font-semibold">
-            Order Id: #{orderDetails._id}
-          </h3>
-          <p className="text-gray-600">
-            {new Date(orderDetails.createdAt).toLocaleDateString()}
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+            🧾 Order Details
+          </h2>
+          <p className="text-gray-500">
+            Placed on {new Date(orders.createdAt).toLocaleDateString()}
           </p>
         </div>
-        <div className="flex flex-col items-start sm:items-end mt-4 sm:mt-0">
+        <div className="flex gap-3">
           <span
             className={`${
-              orderDetails.isPaid
+              orders.isPaid
                 ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            } px-3 py-1 rounded-full text-sm font-medium mb-2`}
+                : "bg-yellow-100 text-yellow-700"
+            } px-4 py-1.5 rounded-full text-sm font-medium`}
           >
-            {orderDetails.isPaid ? "Approved" : "Pending"}
+            {orders.isPaid ? "Paid" : "Pending Payment"}
           </span>
           <span
             className={`${
-              orderDetails.isDelivered
+              orders.isDelivered
                 ? "bg-green-100 text-green-700"
                 : "bg-red-100 text-red-700"
-            } px-3 py-1 rounded-full text-sm font-medium mb-2`}
+            } px-4 py-1.5 rounded-full text-sm font-medium`}
           >
-            {orderDetails.isDelivered ? "Delivered" : "Pending Delivery"}
+            {orders.isDelivered ? "Delivered" : "Not Delivered"}
           </span>
         </div>
       </div>
 
-      {/* Payment & Shipping Info */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-8">
-        <div>
-          <h4 className="text-lg font-semibold mb-2">Payment Info</h4>
-          <p>Payment Method : {orderDetails.paymentMethod}</p>
-          <p>Status : {orderDetails.isPaid ? "Paid" : "Unpaid"}</p>
+      {/* Order Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="bg-gray-50 rounded-xl p-5 shadow-sm">
+          <h4 className="text-lg font-semibold mb-3 text-gray-700">
+            Payment Info
+          </h4>
+          <p className="text-gray-600">Method: {orders.paymentMethod}</p>
+          <p className="text-gray-600">
+            Status:{" "}
+            <span
+              className={`font-medium ${
+                orders.isPaid ? "text-green-600" : "text-red-500"
+              }`}
+            >
+              {orders.isPaid ? "Paid" : "Unpaid"}
+            </span>
+          </p>
         </div>
 
-        <div>
-          <h4 className="text-lg font-semibold mb-2">Shipping Info</h4>
-          <p>Shipping Method : {orderDetails.shippingMethod}</p>
-          <p>
-            Address :{" "}
-            {`${orderDetails.shippingAddress.city} , ${orderDetails.shippingAddress.country}`}
+        <div className="bg-gray-50 rounded-xl p-5 shadow-sm">
+          <h4 className="text-lg font-semibold mb-3 text-gray-700">
+            Shipping Info
+          </h4>
+          <p className="text-gray-600">
+            Method: {orders.shippingMethod || "Standard"}
+          </p>
+          <p className="text-gray-600">
+            Address:{" "}
+            {`${orders.shippingAddress?.city || ""}, ${
+              orders.shippingAddress?.country || ""
+            }`}
+          </p>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-5 shadow-sm">
+          <h4 className="text-lg font-semibold mb-3 text-gray-700">
+            Order Summary
+          </h4>
+          <p className="text-gray-600">
+            Total Items: {orders.orderItems?.length}
+          </p>
+          <p className="text-gray-600 font-medium text-lg mt-2">
+            Total Price:{" "}
+            <span className="text-gray-800">
+              ${orders.totalPrice?.toFixed(2)}
+            </span>
           </p>
         </div>
       </div>
 
       {/* Products List */}
-      <div className="overflow-x-auto">
-        <h4 className="text-lg font-semibold mb-4">Products</h4>
-        <table className="min-w-full text-gray-600 mb-4">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="py-2 px-4">Name</th>
-              <th className="py-2 px-4">Unit Price</th>
-              <th className="py-2 px-4">Quantity</th>
-              <th className="py-2 px-4">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orderDetails.orderitems.map((item) => (
-              <tr key={item.productId} className="border-b">
-                <td className="py-2 px-4 flex items-center">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-12 h-12 object-cover rounded-lg mr-4"
-                  />
-                  <Link
-                    to={`/product/${item.productId}`}
-                    className="text-blue-500 hover:underline"
-                  >
-                    {item.name}
-                  </Link>
-                </td>
-                <td className="py-2 px-4">${item.price}</td>
-                <td className="py-2 px-4">{item.quantity}</td>
-                <td className="py-2 px-4">${item.price * item.quantity}</td>
+      <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
+        <h4 className="text-xl font-semibold mb-4 text-gray-700">Products</h4>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-gray-700">
+            <thead className="bg-gray-100 text-sm uppercase text-gray-600">
+              <tr>
+                <th className="py-3 px-4 text-left">Product</th>
+                <th className="py-3 px-4 text-left">Price</th>
+                <th className="py-3 px-4 text-left">Qty</th>
+                <th className="py-3 px-4 text-left">Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.orderItems?.map((item) => (
+                <tr
+                  key={item.productId}
+                  className="border-b hover:bg-gray-100 transition-colors"
+                >
+                  <td className="py-3 px-4 flex items-center gap-4">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-12 h-12 rounded-lg object-cover"
+                    />
+                    <Link
+                      to={`/product/${item.productId}`}
+                      className="font-medium text-blue-600 hover:underline"
+                    >
+                      {item.name}
+                    </Link>
+                  </td>
+                  <td className="py-3 px-4">${item.price}</td>
+                  <td className="py-3 px-4">{item.quantity}</td>
+                  <td className="py-3 px-4 font-medium">
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Back to orders */}
-      <Link to="/my-orders" className="text-blue-500 hover:underline">
-        Back to My Orders
-      </Link>
-    </div>
+      <div className="flex justify-end mt-8">
+        <Link
+          to="/my-orders"
+          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-xl transition-colors shadow-md"
+        >
+          ← Back to My Orders
+        </Link>
+      </div>
+    </motion.div>
   );
 };
 
-export default OrderDetailsPage;
+export default OrdersPage;
