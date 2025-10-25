@@ -1,5 +1,6 @@
 const express = require("express");
 const User = require("../models/User");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -8,7 +9,8 @@ const router = express.Router();
 // @desc Register a new user
 // @access Public
 router.post("/register", async (req, res) => {
-  const { firstName, email, password, lastName, address } = req.body;
+  const { firstName, email, password, lastName, address, numeroPhone } =
+    req.body;
 
   try {
     // registration logic
@@ -16,7 +18,14 @@ router.post("/register", async (req, res) => {
 
     if (user) return res.status(400).json({ message: "User already exists" });
 
-    user = new User({ firstName, lastName, address, email, password });
+    user = new User({
+      firstName,
+      lastName,
+      address,
+      email,
+      password,
+      numeroPhone,
+    });
     await user.save();
     console.log("user", user);
 
@@ -74,10 +83,9 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid Credential" });
     }
 
-    const isMatch = await user.matchPassword(password);
-
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid Credential" });
+      return res.status(400).json({ message: "Identifiants invalides." });
     }
 
     //create JWT payload
@@ -140,7 +148,7 @@ router.get("/profile", protect, async (req, res) => {
 // ✅ NEW: Check auth route (for frontend to verify session)
 router.get("/me", protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-password");
+    const user = await User.findById(req.user._id);
     res.json({
       success: true,
       user: {
@@ -149,10 +157,64 @@ router.get("/me", protect, async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        address: user.address,
+        numeroPhone: user.numeroPhone,
+        password: user.password,
       },
     });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+//@route PUT /api/users/:id
+// @desc Update a user
+// @access
+router.put("/:id", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (user) {
+      user.firstName = req.body.firstName || user.firstName;
+      user.lastName = req.body.lastName || user.lastName;
+      user.address = req.body.address || user.address;
+      user.password = req.body.password || user.password;
+      user.email = req.body.email || user.email;
+      user.numeroPhone = req.body.numeroPhone || user.numeroPhone;
+    }
+    const updatedUser = await user.save();
+    res.json({ message: "User updated successfully", user: updatedUser });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.put("/change-password/:id", async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user)
+      return res.status(404).json({ message: "Utilisateur introuvable" });
+
+    // ✅ Compare plain password with hashed one
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch)
+      return res
+        .status(400)
+        .json({ message: "Mot de passe actuel incorrect." });
+
+    // ✅ Hash new password before saving
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Mot de passe modifié avec succès." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erreur serveur." });
   }
 });
 

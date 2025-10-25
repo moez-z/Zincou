@@ -1,8 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const cookieParser = require("cookie-parser"); // ADD THIS
+const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
+
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 const cardRoutes = require("./routes/CardRoutes");
@@ -14,43 +15,49 @@ const adminRoutes = require("./routes/adminRoutes");
 const productAdminRoutes = require("./routes/productAdminRoutes");
 const orderAdminRoutes = require("./routes/orderAdminRoutes");
 
-dotenv.config(); // MOVE THIS UP (before using process.env)
+dotenv.config(); // Must be before using process.env
 
 const app = express();
-app.use(express.json());
-app.use(cookieParser()); // ADD THIS - Must be before routes
 
-// UPDATE CORS configuration
+// Increase body size limit for JSON and URL-encoded payloads
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+// Cookie parser (before routes)
+app.use(cookieParser());
+
+// CORS configuration
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173", // Your React app URL
-    credentials: true, // IMPORTANT: Allow cookies to be sent
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true, // Allow cookies
   })
 );
 
 const PORT = process.env.PORT || 3000;
 
-// connect to bd
+// Connect to DB
 connectDB();
 
 app.get("/", (req, res) => {
   res.send("Welcome to zincou api");
 });
 
-//API ROutes
+// API Routes
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cards", cardRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/upload", uploadRoutes);
+app.use("/api/upload", uploadRoutes); // multer handles file uploads here
 app.use("/api/subscribe", subscriberRoutes);
 
-// admin routes
+// Admin Routes
 app.use("/api/admin/users", adminRoutes);
 app.use("/api/admin/products", productAdminRoutes);
 app.use("/api/admin/orders", orderAdminRoutes);
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

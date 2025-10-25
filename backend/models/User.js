@@ -33,6 +33,12 @@ const userSchema = new mongoose.Schema(
       enum: ["customer", "admin"],
       default: "customer",
     },
+    numeroPhone: {
+      type: String,
+      trim: true,
+      minLength: 8,
+      maxLength: 8,
+    },
   },
   { timestamps: true }
 );

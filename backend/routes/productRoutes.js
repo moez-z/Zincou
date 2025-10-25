@@ -69,23 +69,22 @@ router.put("/:id", protect, isAdmin, async (req, res) => {
     const {
       name,
       description,
-      images,
       price,
       discountPrice,
       countInStock,
+      sku,
       category,
-      brand,
+      material,
+      gender,
       sizes,
       colors,
       collections,
-      material,
-      gender,
+      tags,
       isFeatured,
       isPublished,
-      tags,
-      dimension,
-      weight,
-      sku,
+      rating,
+      numReviews,
+      images,
     } = req.body;
 
     // Find the product by ID and update i
@@ -99,7 +98,6 @@ router.put("/:id", protect, isAdmin, async (req, res) => {
       product.discountPrice = discountPrice || product.discountPrice;
       product.countInStock = countInStock || product.countInStock;
       product.category = category || product.category;
-      product.brand = brand || product.brand;
       product.sizes = sizes || product.sizes;
       product.colors = colors || product.colors;
       product.collections = collections || product.collections;
@@ -110,9 +108,9 @@ router.put("/:id", protect, isAdmin, async (req, res) => {
       product.isPublished =
         isPublished !== undefined ? isPublished : product.isPublished;
       product.tags = tags || product.tags;
-      product.dimension = dimension || product.dimension;
-      product.weight = weight || product.weight;
       product.sku = sku || product.sku;
+      product.rating = rating || product.rating;
+      product.numReviews = numReviews || product.numReviews;
 
       const updatedProduct = await product.save();
       res.json(updatedProduct);

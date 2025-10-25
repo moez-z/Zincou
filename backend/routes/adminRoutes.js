@@ -16,11 +16,30 @@ router.get("/", protect, isAdmin, async (req, res) => {
   }
 });
 
+// @route GET /api/admin/users
+// @desc Get  user by id (admin only )
+// @access Private/Admin
+router.get("/:id", protect, isAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // @route POST /api/admin/users
 // @desc Create a user (admin only )
 // @access Private/Admin
 router.post("/", protect, isAdmin, async (req, res) => {
-  const { name, email, password, role } = req.body;
+  console.log(req.body);
+  const { firstName, lastName, email, password, role, numeroPhone, address } =
+    req.body;
   try {
     let user = await User.findOne({ email });
 
@@ -28,7 +47,16 @@ router.post("/", protect, isAdmin, async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    user = new User({ name, email, password, role: role || "customer" });
+    user = new User({
+      firstName,
+      lastName,
+      email,
+      password,
+      role: role || "customer",
+      numeroPhone,
+      address,
+    });
+    console.log(user);
     await user.save();
     res.status(201).json({ message: "User created successfully", user });
   } catch (error) {
