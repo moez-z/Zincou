@@ -204,11 +204,8 @@ router.put("/change-password/:id", async (req, res) => {
         .status(400)
         .json({ message: "Mot de passe actuel incorrect." });
 
-    // ✅ Hash new password before saving
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    user.password = newPassword;
 
-    user.password = hashedPassword;
     await user.save();
 
     res.json({ message: "Mot de passe modifié avec succès." });
