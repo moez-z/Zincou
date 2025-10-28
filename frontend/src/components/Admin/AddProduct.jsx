@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { createProduct } from "../../redux/slices/adminProductSlice";
+import { nav } from "framer-motion/client";
+import { useNavigate } from "react-router-dom";
 
 const AddProduct = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [productData, setProductData] = useState({
     name: "",
@@ -63,10 +66,10 @@ const AddProduct = () => {
     }));
   };
 
-  console.log(productData);
   const handleSubmit = (event) => {
     event.preventDefault();
     dispatch(createProduct(productData));
+    navigate("/admin/products");
 
     // Handle form submission logic here
   };
@@ -216,9 +219,14 @@ const AddProduct = () => {
             <input
               type="text"
               name="sizes"
-              value={productData.sizes}
-              onChange={handleChange}
+              value={productData.sizes.join(", ")}
               className="w-full border border-gray-300 rounded-md p-2"
+              onChange={(e) =>
+                setProductData({
+                  ...productData,
+                  sizes: e.target.value.split(",").map((size) => size.trim()),
+                })
+              }
               placeholder="e.g., S, M, L, XL"
               required
             />
@@ -231,9 +239,16 @@ const AddProduct = () => {
             <input
               type="text"
               name="colors"
-              value={productData.colors}
-              onChange={handleChange}
+              value={productData.colors.join(", ")}
               className="w-full border border-gray-300 rounded-md p-2"
+              onChange={(e) =>
+                setProductData({
+                  ...productData,
+                  colors: e.target.value
+                    .split(",")
+                    .map((color) => color.trim()),
+                })
+              }
               placeholder="e.g., Red, Blue, Black"
               required
             />
@@ -246,9 +261,16 @@ const AddProduct = () => {
             <input
               type="text"
               name="collections"
-              value={productData.collections}
-              onChange={handleChange}
+              value={productData.collections.join(", ")}
               className="w-full border border-gray-300 rounded-md p-2"
+              onChange={(e) =>
+                setProductData({
+                  ...productData,
+                  collections: e.target.value
+                    .split(",")
+                    .map((collection) => collection.trim()),
+                })
+              }
               placeholder="e.g., Summer 2024, New Arrivals"
               required
             />
@@ -261,9 +283,14 @@ const AddProduct = () => {
             <input
               type="text"
               name="tags"
-              value={productData.tags}
-              onChange={handleChange}
+              value={productData.tags.join(", ")}
               className="w-full border border-gray-300 rounded-md p-2"
+              onChange={(e) =>
+                setProductData({
+                  ...productData,
+                  tags: e.target.value.split(",").map((tag) => tag.trim()),
+                })
+              }
               placeholder="e.g., trending, sale, bestseller"
             />
           </div>

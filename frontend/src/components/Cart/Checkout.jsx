@@ -279,14 +279,6 @@ const Checkout = () => {
               {checkoutLoading ? "Processing..." : "Confirm"}
             </button>
           </div>
-
-          {checkoutError && (
-            <p className="mt-2 text-red-500">
-              {typeof checkoutError === "string"
-                ? checkoutError
-                : checkoutError.message || "An error occurred"}
-            </p>
-          )}
         </form>
       </div>
     </div>

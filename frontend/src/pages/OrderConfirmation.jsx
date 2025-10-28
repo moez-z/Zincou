@@ -1,20 +1,19 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { fetchOrdersDetails } from "../redux/slices/orderSlice";
 
 const OrderConfirmation = () => {
   const { orderDetails, loading, error } = useSelector((state) => state.order);
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (id) {
       dispatch(fetchOrdersDetails(id));
     }
   }, [dispatch, id]);
-
-
 
   const calculatedEstimatedDelivery = (createdAt) => {
     const orderDate = new Date(createdAt);
@@ -36,7 +35,6 @@ const OrderConfirmation = () => {
       <div className="p-6 rounded-lg border">
         <div className="flex justify-between mb-20">
           <div>
-            {/* ✅ Changed from checkout to orderDetails */}
             <h2 className="text-xl font-semibold">
               Order ID: {orderDetails._id}
             </h2>
@@ -94,6 +92,22 @@ const OrderConfirmation = () => {
               {orderDetails.shippingAddress?.country}
             </p>
           </div>
+        </div>
+
+        {/* ✅ Buttons Section */}
+        <div className="flex justify-center gap-6 mt-12">
+          <button
+            onClick={() => navigate("/my-orders")}
+            className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+          >
+            See All Orders
+          </button>
+          <button
+            onClick={() => navigate("/")}
+            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+          >
+            Return to Home
+          </button>
         </div>
       </div>
     </div>

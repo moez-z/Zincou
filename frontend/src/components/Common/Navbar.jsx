@@ -19,6 +19,7 @@ const Navbar = () => {
 
   // Get user from Redux store
   const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { selectedCart } = useSelector((state) => state.cart);
 
   // Check if user is admin
   const isAdmin = isAuthenticated && user?.role === "admin";
@@ -41,13 +42,13 @@ const Navbar = () => {
         {/* Left Navigation */}
         <div className="hidden md:flex space-x-6">
           <Link
-            to="#"
+            to={`/collections/all?gender=Men`}
             className="text-gray-700 hover:text-black text-sm font-medium uppercase"
           >
             Men
           </Link>
           <Link
-            to="#"
+            to={`/collections/all?gender=Women`}
             className="text-gray-700 hover:text-black text-sm font-medium uppercase"
           >
             Women
@@ -59,7 +60,7 @@ const Navbar = () => {
             On Sale
           </Link>
           <Link
-            to="#"
+            to="new-arrivals"
             className="text-gray-700 hover:text-black text-sm font-medium uppercase"
           >
             New Arrivals
@@ -105,7 +106,7 @@ const Navbar = () => {
           >
             <HiOutlineShoppingBag className="h-6 w-6 text-gray-700" />
             <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-2 py-0.5">
-              4
+              {selectedCart?.products?.length || 0}
             </span>
           </button>
           <button onClick={toggleNavDrawer}>

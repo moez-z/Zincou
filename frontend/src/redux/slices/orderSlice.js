@@ -43,7 +43,7 @@ const orderSlice = createSlice({
   name: "orders",
   initialState: {
     orders: [],
-    OrdersDetails: null,
+    orderDetails: [],
     totalOrders: 0,
     loading: false,
     error: null,
@@ -72,7 +72,7 @@ const orderSlice = createSlice({
       })
       .addCase(fetchOrdersDetails.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        state.orderDetails = action.payload;
       })
       .addCase(fetchOrdersDetails.rejected, (state, action) => {
         state.loading = false;
