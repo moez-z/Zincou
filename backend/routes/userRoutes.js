@@ -101,10 +101,10 @@ router.post("/login", async (req, res) => {
 
         // ✅ NEW: Set token in httpOnly cookie
         res.cookie("token", token, {
-          httpOnly: true, // Cannot be accessed by JavaScript
-          secure: process.env.NODE_ENV === "production", // Only HTTPS in production
-          sameSite: "strict", // CSRF protection
-          maxAge: 12 * 60 * 60 * 1000, // 12 hours in milliseconds
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production", // true on Render
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ✅ allow cross-site
+          maxAge: 12 * 60 * 60 * 1000,
         });
 
         // ✅ NEW: Send only user data (no token in response body)
