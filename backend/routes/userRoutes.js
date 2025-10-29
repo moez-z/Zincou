@@ -44,7 +44,7 @@ router.post("/register", async (req, res) => {
         res.cookie("token", token, {
           httpOnly: true, // Cannot be accessed by JavaScript
           secure: process.env.NODE_ENV === "production", // Only HTTPS in production
-          sameSite: "strict", // CSRF protection
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
           maxAge: 12 * 60 * 60 * 1000, // 12 hours in milliseconds
         });
 
