@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
+const session = require("express-session"); // ADD THIS
+const MongoStore = require("connect-mongo"); // ADD THIS
 const connectDB = require("./config/db");
 
 const userRoutes = require("./routes/userRoutes");
@@ -15,9 +17,12 @@ const adminRoutes = require("./routes/adminRoutes");
 const productAdminRoutes = require("./routes/productAdminRoutes");
 const orderAdminRoutes = require("./routes/orderAdminRoutes");
 
-dotenv.config(); // Must be before using process.env
+dotenv.config();
 
 const app = express();
+
+// ⭐ CRITICAL: Trust proxy for Render
+app.set("trust proxy", 1);
 
 // Increase body size limit for JSON and URL-encoded payloads
 app.use(express.json({ limit: "10mb" }));
@@ -26,7 +31,7 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 // Cookie parser (before routes)
 app.use(cookieParser());
 
-// CORS configuration
+// CORS configuration - MUST come before session
 const allowedOrigins = [
   "http://localhost:5173",
   "https://zincou-frontend.onrender.com",
@@ -42,7 +47,31 @@ app.use(
         callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true, // Allow cookies and auth headers
+    credentials: true,
+  })
+);
+
+// ⭐ ADD SESSION MIDDLEWARE
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your-super-secret-key-change-this",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI, // Your MongoDB connection string
+      touchAfter: 24 * 3600,
+      crypto: {
+        secret:
+          process.env.SESSION_SECRET || "your-super-secret-key-change-this",
+      },
+    }),
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // true in production
+      httpOnly: true,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    },
+    name: "sessionId", // Custom cookie name
   })
 );
 
@@ -61,7 +90,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/cards", cardRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/upload", uploadRoutes); // multer handles file uploads here
+app.use("/api/upload", uploadRoutes);
 app.use("/api/subscribe", subscriberRoutes);
 
 // Admin Routes
