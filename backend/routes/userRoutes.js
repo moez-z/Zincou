@@ -36,19 +36,19 @@ router.post("/register", async (req, res) => {
     jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: "12h" },
+      { expiresIn: "7d" }, // Changed to 7 days for better UX
       (err, token) => {
         if (err) throw err;
 
-        // ✅ NEW: Set token in httpOnly cookie
+        // Set token in httpOnly cookie
         res.cookie("token", token, {
-          httpOnly: true, // Cannot be accessed by JavaScript
-          secure: process.env.NODE_ENV === "production", // Only HTTPS in production
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
           sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-          maxAge: 12 * 60 * 60 * 1000, // 12 hours in milliseconds
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
 
-        // ✅ NEW: Send only user data (no token in response body)
+        // Send only user data
         res.status(201).json({
           success: true,
           user: {
@@ -73,7 +73,7 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  console.log(email, password);
+  console.log("Login attempt:", email);
 
   try {
     //find the user
@@ -95,19 +95,19 @@ router.post("/login", async (req, res) => {
     jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: "12h" },
+      { expiresIn: "7d" }, // Changed to 7 days
       (err, token) => {
         if (err) throw err;
 
-        // ✅ NEW: Set token in httpOnly cookie
+        // Set token in httpOnly cookie
         res.cookie("token", token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production", // true on Render
-          sameSite: "none", // ✅ allow cross-site
-          maxAge: 12 * 60 * 60 * 1000,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
 
-        // ✅ NEW: Send only user data (no token in response body)
+        // Send only user data
         res.json({
           success: true,
           user: {
@@ -129,9 +129,12 @@ router.post("/login", async (req, res) => {
 // @route POST api/users/logout
 // @desc Logout user (clear cookie)
 // @access Public
-// ✅ NEW: Logout route
 router.post("/logout", (req, res) => {
-  res.clearCookie("token");
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  });
   res.json({ success: true, message: "Logged out successfully" });
 });
 
@@ -145,10 +148,12 @@ router.get("/profile", protect, async (req, res) => {
 // @route GET api/users/me
 // @desc Check if user is authenticated
 // @access Private
-// ✅ NEW: Check auth route (for frontend to verify session)
 router.get("/me", protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     res.json({
       success: true,
       user: {
@@ -159,28 +164,35 @@ router.get("/me", protect, async (req, res) => {
         role: user.role,
         address: user.address,
         numeroPhone: user.numeroPhone,
-        password: user.password,
       },
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 //@route PUT /api/users/:id
 // @desc Update a user
-// @access
+// @access Private
 router.put("/:id", protect, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    if (user) {
-      user.firstName = req.body.firstName || user.firstName;
-      user.lastName = req.body.lastName || user.lastName;
-      user.address = req.body.address || user.address;
-      user.password = req.body.password || user.password;
-      user.email = req.body.email || user.email;
-      user.numeroPhone = req.body.numeroPhone || user.numeroPhone;
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
+
+    user.firstName = req.body.firstName || user.firstName;
+    user.lastName = req.body.lastName || user.lastName;
+    user.address = req.body.address || user.address;
+    user.email = req.body.email || user.email;
+    user.numeroPhone = req.body.numeroPhone || user.numeroPhone;
+
+    // Only update password if provided
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
     const updatedUser = await user.save();
     res.json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
@@ -189,7 +201,7 @@ router.put("/:id", protect, async (req, res) => {
   }
 });
 
-router.put("/change-password/:id", async (req, res) => {
+router.put("/change-password/:id", protect, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.params.id);
@@ -197,7 +209,7 @@ router.put("/change-password/:id", async (req, res) => {
     if (!user)
       return res.status(404).json({ message: "Utilisateur introuvable" });
 
-    // ✅ Compare plain password with hashed one
+    // Compare plain password with hashed one
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch)
       return res
@@ -205,7 +217,6 @@ router.put("/change-password/:id", async (req, res) => {
         .json({ message: "Mot de passe actuel incorrect." });
 
     user.password = newPassword;
-
     await user.save();
 
     res.json({ message: "Mot de passe modifié avec succès." });
