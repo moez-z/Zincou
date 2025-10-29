@@ -103,7 +103,7 @@ router.post("/login", async (req, res) => {
         res.cookie("token", token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production", // true on Render
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ✅ allow cross-site
+          sameSite: "none", // ✅ allow cross-site
           maxAge: 12 * 60 * 60 * 1000,
         });
 
