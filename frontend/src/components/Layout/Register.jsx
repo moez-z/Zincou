@@ -59,15 +59,6 @@ const Register = ({
   return (
     <div className="bg-white flex items-center justify-center z-50 min-h-screen">
       <div className="bg-white shadow-2xl overflow-hidden w-full max-w-6xl flex flex-col md:flex-row md:h-auto relative rounded-lg my-4">
-        {/* Close Button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-4 right-4 z-30 p-2 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Close registration"
-        >
-          <IoMdClose size={24} className="text-gray-600" />
-        </button>
-
         {/* Left Side: Register Form */}
         <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-6 md:p-8 overflow-y-auto max-h-screen">
           <form onSubmit={handleSubmit} className="w-full max-w-md">
