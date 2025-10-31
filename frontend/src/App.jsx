@@ -29,13 +29,13 @@ import EditProfile from "./pages/EditProfile";
 import NewArrivals from "./components/Products/NewArrivals";
 import AddProduct from "./components/Admin/AddProduct";
 import OrderDetailsMan from "./components/Admin/OrderDetailsMan";
+import {
+  ProtectedRoute,
+  AdminProtectedRoute,
+} from "./components/Layout/ProtectedRoutes";
+import NotFound from "./pages/NotFound";
 
 // 🔒 ProtectedRoute wrapper
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useSelector((state) => state.auth);
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return children;
-};
 
 function AppRoutes() {
   const dispatch = useDispatch();
@@ -132,7 +132,14 @@ function AppRoutes() {
           </Route>
 
           {/* Admin layout */}
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route
+            path="/admin"
+            element={
+              <AdminProtectedRoute>
+                <AdminLayout />
+              </AdminProtectedRoute>
+            }
+          >
             <Route index element={<AdminHomePage />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="products" element={<ProductManagement />} />
@@ -143,7 +150,7 @@ function AppRoutes() {
           </Route>
 
           {/* Catch all - redirect unknown routes */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </>
