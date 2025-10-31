@@ -1,218 +1,105 @@
 const express = require("express");
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const { protect } = require("../middleware/authMiddleware");
-const router = express.Router();
+const cors = require("cors");
+const dotenv = require("dotenv");
+const cookieParser = require("cookie-parser");
+const session = require("express-session"); // ADD THIS
+const MongoStore = require("connect-mongo"); // ADD THIS
+const connectDB = require("./config/db");
 
-// @route POST api/users/register
-// @desc Register a new user
-// @access Public
-router.post("/register", async (req, res) => {
-  const { firstName, email, password, lastName, address, numeroPhone } =
-    req.body;
+const userRoutes = require("./routes/userRoutes");
+const productRoutes = require("./routes/productRoutes");
+const cardRoutes = require("./routes/CardRoutes");
+const checkoutRoutes = require("./routes/checkoutRoutes");
+const orderRoutes = require("./routes/OrderRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
+const subscriberRoutes = require("./routes/subscriberRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const productAdminRoutes = require("./routes/productAdminRoutes");
+const orderAdminRoutes = require("./routes/orderAdminRoutes");
 
-  try {
-    // registration logic
-    let user = await User.findOne({ email });
+dotenv.config();
 
-    if (user) return res.status(400).json({ message: "User already exists" });
+const app = express();
 
-    user = new User({
-      firstName,
-      lastName,
-      address,
-      email,
-      password,
-      numeroPhone,
-    });
-    await user.save();
-    console.log("user", user);
+// ⭐ CRITICAL: Trust proxy for Render
+app.set("trust proxy", 1);
 
-    //create JWT payload
-    const payload = { user: { _id: user._id, role: user.role } };
+// Increase body size limit for JSON and URL-encoded payloads
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-    //sign the token
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: "12h" },
-      (err, token) => {
-        if (err) throw err;
+// Cookie parser (before routes)
+app.use(cookieParser());
 
-        // ✅ NEW: Set token in httpOnly cookie
-        res.cookie("token", token, {
-          httpOnly: true, // Cannot be accessed by JavaScript
-          secure: process.env.NODE_ENV === "production", // Only HTTPS in production
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-          maxAge: 12 * 60 * 60 * 1000, // 12 hours in milliseconds
-        });
+// CORS configuration - MUST come before session
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://zincou-frontend.onrender.com",
+];
 
-        // ✅ NEW: Send only user data (no token in response body)
-        res.status(201).json({
-          success: true,
-          user: {
-            _id: user._id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            role: user.role,
-          },
-        });
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("❌ Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
       }
-    );
-  } catch (error) {
-    console.log(error);
-    res.status(500).send("server error");
-  }
-});
+    },
+    credentials: true,
+  })
+);
 
-// @route POST api/users/login
-// @desc Authenticate user
-// @access Public
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
-  console.log(email, password);
-
-  try {
-    //find the user
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(400).json({ message: "Invalid Credential" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Identifiants invalides." });
-    }
-
-    //create JWT payload
-    const payload = { user: { _id: user._id, role: user.role } };
-
-    //sign the token
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: "12h" },
-      (err, token) => {
-        if (err) throw err;
-
-        // ✅ NEW: Set token in httpOnly cookie
-        res.cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production", // true on Render
-          sameSite: "none", // ✅ allow cross-site
-          maxAge: 12 * 60 * 60 * 1000,
-        });
-
-        // ✅ NEW: Send only user data (no token in response body)
-        res.json({
-          success: true,
-          user: {
-            _id: user._id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            role: user.role,
-          },
-        });
-      }
-    );
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("server error");
-  }
-});
-
-// @route POST api/users/logout
-// @desc Logout user (clear cookie)
-// @access Public
-// ✅ NEW: Logout route
-router.post("/logout", (req, res) => {
-  res.clearCookie("token");
-  res.json({ success: true, message: "Logged out successfully" });
-});
-
-// @route GET api/users/profile
-// @desc Get logged-in user's profile (Protected Route)
-// @access Private
-router.get("/profile", protect, async (req, res) => {
-  res.json(req.user);
-});
-
-// @route GET api/users/me
-// @desc Check if user is authenticated
-// @access Private
-// ✅ NEW: Check auth route (for frontend to verify session)
-router.get("/me", protect, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    res.json({
-      success: true,
-      user: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-        address: user.address,
-        numeroPhone: user.numeroPhone,
-        password: user.password,
+// ⭐ ADD SESSION MIDDLEWARE
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your-super-secret-key-change-this",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      dbName: "ZinCou", // Your MongoDB connection string
+      touchAfter: 24 * 3600,
+      crypto: {
+        secret:
+          process.env.SESSION_SECRET || "your-super-secret-key-change-this",
       },
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
+    }),
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // true in production
+      httpOnly: true,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    },
+    name: "sessionId", // Custom cookie name
+  })
+);
+
+const PORT = process.env.PORT || 3000;
+
+// Connect to DB
+connectDB();
+
+app.get("/", (req, res) => {
+  res.send("Welcome to zincou api");
 });
 
-//@route PUT /api/users/:id
-// @desc Update a user
-// @access
-router.put("/:id", protect, async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (user) {
-      user.firstName = req.body.firstName || user.firstName;
-      user.lastName = req.body.lastName || user.lastName;
-      user.address = req.body.address || user.address;
-      user.password = req.body.password || user.password;
-      user.email = req.body.email || user.email;
-      user.numeroPhone = req.body.numeroPhone || user.numeroPhone;
-    }
-    const updatedUser = await user.save();
-    res.json({ message: "User updated successfully", user: updatedUser });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
+// API Routes
+app.use("/api/users", userRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/cards", cardRoutes);
+app.use("/api/checkout", checkoutRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/subscribe", subscriberRoutes);
+
+// Admin Routes
+app.use("/api/admin/users", adminRoutes);
+app.use("/api/admin/products", productAdminRoutes);
+app.use("/api/admin/orders", orderAdminRoutes);
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-router.put("/change-password/:id", async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.params.id);
-
-    if (!user)
-      return res.status(404).json({ message: "Utilisateur introuvable" });
-
-    // ✅ Compare plain password with hashed one
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch)
-      return res
-        .status(400)
-        .json({ message: "Mot de passe actuel incorrect." });
-
-    user.password = newPassword;
-
-    await user.save();
-
-    res.json({ message: "Mot de passe modifié avec succès." });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Erreur serveur." });
-  }
-});
-
-module.exports = router;
