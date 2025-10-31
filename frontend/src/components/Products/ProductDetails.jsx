@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import ProductGrid from "./ProductGrid";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -22,6 +22,7 @@ const ProductDetails = ({ productId }) => {
   const [selectedColor, setSelectedColor] = useState("");
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const productFetchId = productId || id;
 
@@ -66,7 +67,6 @@ const ProductDetails = ({ productId }) => {
       return;
     }
 
-   
     dispatch(
       addToCart({
         productId: productFetchId,
@@ -81,10 +81,10 @@ const ProductDetails = ({ productId }) => {
         toast.success(
           `Added to cart: ${selectedProduct.name} - ${selectedColor}, Size ${selectedSize}, Quantity: ${quantity}`,
           {
-            duration: 3000,
+            duration: 1500,
             action: {
               label: "View Cart",
-              onClick: () => console.log("View cart clicked"),
+              onClick: () => navigate("/my-cart"),
             },
           }
         );

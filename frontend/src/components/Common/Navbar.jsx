@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import {
-  HiOutlineUser,
   HiOutlineShoppingBag,
   HiBars3BottomRight,
   HiMagnifyingGlass,
 } from "react-icons/hi2";
+import { IoMdClose } from "react-icons/io";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import CartDrawer from "../Layout/CartDrawer";
 import Login from "../Layout/Login";
-import { IoMdClose } from "react-icons/io";
 import ProfileSection from "../Layout/ProfileSection";
 
 const Navbar = () => {
@@ -17,171 +17,160 @@ const Navbar = () => {
   const [navDrawerOpen, setNavDrawerOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
-  // Get user from Redux store
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { selectedCart } = useSelector((state) => state.cart);
-
-  // Check if user is admin
   const isAdmin = isAuthenticated && user?.role === "admin";
-
-  const toggleNavDrawer = () => {
-    setNavDrawerOpen(!navDrawerOpen);
-  };
-
-  const toggleCartDrawer = () => {
-    setDrawerOpen(!drawerOpen);
-  };
-
-  const toggleLoginModal = () => {
-    setLoginModalOpen(!loginModalOpen);
-  };
 
   return (
     <>
-      <nav className="w-full flex items-center justify-between py-4 px-20 bg-blanc-1">
-        {/* Left Navigation */}
-        <div className="hidden md:flex space-x-6">
-          <Link
-            to={`/collections/all?gender=Men`}
-            className="text-gray-700 hover:text-black text-sm font-medium uppercase"
+      <nav className="fixed top-0 left-0 w-full z-50 bg-white/95 backdrop-blur-sm shadow-sm">
+        <div className="flex items-center justify-between px-4 sm:px-8 lg:px-20 py-3 md:py-4">
+          {/* Hamburger Menu (mobile/tablet only) */}
+          <button
+            onClick={() => setNavDrawerOpen(true)}
+            className="block md:hidden text-gray-700"
           >
-            Men
-          </Link>
-          <Link
-            to={`/collections/all?gender=Women`}
-            className="text-gray-700 hover:text-black text-sm font-medium uppercase"
-          >
-            Women
-          </Link>
-          <Link
-            to="#"
-            className="text-gray-700 hover:text-black text-sm font-medium uppercase"
-          >
-            On Sale
-          </Link>
-          <Link
-            to="new-arrivals"
-            className="text-gray-700 hover:text-black text-sm font-medium uppercase"
-          >
-            New Arrivals
-          </Link>
-        </div>
+            <HiBars3BottomRight className="h-6 w-6" />
+          </button>
 
-        {/* Center logo*/}
-        <div className="absolute left-1/2 transform -translate-x-1/2">
-          <Link to="/" className="text-2xl font-medium">
-            ZinCou
-          </Link>
-        </div>
-
-        {/* Search and Right Icons Container */}
-        <div className="flex items-center space-x-4">
-          {/*search*/}
-          <div className="relative flex items-center">
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-48 px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white"
-            />
-            <button className="absolute right-3">
-              <HiMagnifyingGlass className="h-5 w-5 text-gray-500" />
-            </button>
+          {/* Left Navigation (desktop) */}
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
+            {["Men", "Women", "On Sale", "New Arrivals"].map((item) => (
+              <Link
+                key={item}
+                to={`/collections/all?gender=${
+                  item === "Men" || item === "Women" ? item : ""
+                }`}
+                className="text-gray-700 hover:text-black text-sm font-medium uppercase transition-colors"
+              >
+                {item}
+              </Link>
+            ))}
           </div>
 
-          {/*Right icons */}
-          {/* Admin Link - Only visible for admin users */}
-          {isAdmin && (
+          {/* Center Logo */}
+          <div className="flex-1 flex justify-center md:flex-none">
             <Link
-              to="/admin"
-              className="block bg-black px-3 py-1 rounded text-sm text-white hover:bg-gray-800 transition-colors font-medium"
+              to="/"
+              className="text-xl sm:text-2xl font-bold text-gray-900 tracking-wide"
             >
-              Admin
+              ZinCou
             </Link>
-          )}
+          </div>
 
-          <ProfileSection />
-          <button
-            onClick={toggleCartDrawer}
-            className="relative hover:text-black"
-          >
-            <HiOutlineShoppingBag className="h-6 w-6 text-gray-700" />
-            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-2 py-0.5">
-              {selectedCart?.products?.length || 0}
-            </span>
-          </button>
-          <button onClick={toggleNavDrawer}>
-            <HiBars3BottomRight className="h-6 w-6 text-gray-700" />
-          </button>
+          {/* Search + Icons */}
+          <div className="flex items-center space-x-4 sm:space-x-5">
+            {/* Search (hidden on small tablets) */}
+            <div className="hidden md:flex relative items-center">
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-32 sm:w-40 md:w-48 lg:w-60 px-3 py-2 text-sm bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white transition-all"
+              />
+              <button className="absolute right-3">
+                <HiMagnifyingGlass className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Admin Link (visible only on large screens) */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="hidden lg:block bg-black px-3 py-1.5 rounded text-sm text-white hover:bg-gray-800 transition-all"
+              >
+                Admin
+              </Link>
+            )}
+
+            {/* Profile */}
+            <ProfileSection />
+
+            {/* Cart Icon */}
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="relative hover:text-black transition-colors"
+            >
+              <HiOutlineShoppingBag className="h-6 w-6 text-gray-700" />
+              {selectedCart?.products?.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5">
+                  {selectedCart.products.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 
-      {/* Cart Drawer */}
-      <CartDrawer drawerOpen={drawerOpen} toggleCartDrawer={toggleCartDrawer} />
+      {/* ===== Mobile Navigation Drawer ===== */}
+      <AnimatePresence>
+        {navDrawerOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setNavDrawerOpen(false)}
+            />
 
-      {/* Login Modal */}
+            {/* Slide-in Drawer */}
+            <motion.div
+              className="fixed top-0 left-0 w-3/4 sm:w-1/2 h-full bg-white shadow-xl z-50 flex flex-col"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+              <div className="flex justify-between items-center p-4 border-b">
+                <h2 className="text-lg font-semibold">Menu</h2>
+                <button onClick={() => setNavDrawerOpen(false)}>
+                  <IoMdClose className="h-6 w-6 text-gray-600" />
+                </button>
+              </div>
+
+              <div className="p-4 flex flex-col space-y-5">
+                {["Men", "Women", "On Sale", "New Arrivals"].map((item) => (
+                  <Link
+                    key={item}
+                    to={`/collections/all?gender=${
+                      item === "Men" || item === "Women" ? item : ""
+                    }`}
+                    onClick={() => setNavDrawerOpen(false)}
+                    className="text-gray-700 hover:text-black font-medium transition-colors"
+                  >
+                    {item}
+                  </Link>
+                ))}
+
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setNavDrawerOpen(false)}
+                    className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors text-center font-medium"
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ===== Cart Drawer ===== */}
+      <CartDrawer
+        drawerOpen={drawerOpen}
+        toggleCartDrawer={() => setDrawerOpen(false)}
+      />
+
+      {/* ===== Login Modal ===== */}
       {loginModalOpen && (
         <Login
           loginModalOpen={loginModalOpen}
           setLoginModalOpen={setLoginModalOpen}
         />
       )}
-
-      {/* Navigation Drawer */}
-      <div
-        className={`fixed top-0 w-3/4 left-0 sm:w-1/2 md:w1/3 h-full bg-white shadow-lg transform transition-transform duration-300 z-50 ${
-          navDrawerOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex justify-end p-4">
-          <button onClick={toggleNavDrawer}>
-            <IoMdClose className="h-6 w-6 text-gray-600 " />
-          </button>
-        </div>
-        <div className="p-4">
-          <h2 className="text-xl font-semibold mb-4"> Menu</h2>
-          <nav className="space-y-4">
-            <Link
-              to="#"
-              onClick={toggleNavDrawer}
-              className="block text-gray-600 hover:text-black"
-            >
-              Men
-            </Link>
-            <Link
-              to="#"
-              onClick={toggleNavDrawer}
-              className="block text-gray-600 hover:text-black"
-            >
-              Women
-            </Link>
-            <Link
-              to="#"
-              onClick={toggleNavDrawer}
-              className="block text-gray-600 hover:text-black"
-            >
-              On Sale
-            </Link>
-            <Link
-              to="/new-arrivals"
-              onClick={toggleNavDrawer}
-              className="block text-gray-600 hover:text-black"
-            >
-              New Arrivals
-            </Link>
-
-            {/* Admin Link in Mobile Menu - Only for admins */}
-            {isAdmin && (
-              <Link
-                to="/admin"
-                onClick={toggleNavDrawer}
-                className="block bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors font-medium"
-              >
-                Admin Dashboard
-              </Link>
-            )}
-          </nav>
-        </div>
-      </div>
     </>
   );
 };

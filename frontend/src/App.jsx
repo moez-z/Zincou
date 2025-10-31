@@ -71,7 +71,12 @@ function AppRoutes() {
 
   return (
     <>
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 2000, // ⏱️ 5 seconds
+        }}
+      />
       <BrowserRouter>
         <Routes>
           {/* User layout */}
