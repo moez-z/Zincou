@@ -6,7 +6,6 @@ const FeaturedCollection = () => {
   return (
     <section className="py-10 sm:py-14 md:py-16 px-4 md:px-8 lg:px-0">
       <div className="container mx-auto flex flex-col-reverse lg:flex-row items-center justify-between bg-gradient-to-br from-[#c91e1e] to-[#000303] rounded-3xl overflow-hidden">
-        
         {/* Left Section */}
         <div className="w-full lg:w-1/2 p-6 sm:p-10 md:p-12 lg:p-16 text-left text-white">
           <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tighter uppercase mb-4">
@@ -30,7 +29,7 @@ const FeaturedCollection = () => {
           <img
             src={featured}
             alt="A collection of stylish and comfortable apparel for everyday wear"
-            className="w-full h-full object-contain rounded-t-3xl lg:rounded-tr-3xl lg:rounded-br-3xl"
+            className="w-full h-full object-contain lg:rounded-tr-3xl lg:rounded-br-3xl"
             loading="lazy"
           />
         </div>
