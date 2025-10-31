@@ -81,6 +81,7 @@ const PORT = process.env.PORT || 3000;
 // Connect to DB
 connectDB();
 
+
 app.get("/", (req, res) => {
   res.send("Welcome to zincou api");
 });
