@@ -74,7 +74,7 @@ function AppRoutes() {
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 2000, // ⏱️ 5 seconds
+          duration: 4000, // ⏱️ 5 seconds
         }}
       />
       <BrowserRouter>
